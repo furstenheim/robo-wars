@@ -9,6 +9,7 @@ var fs = require('fs')
 var size = require('gulp-size')
 var notify = require('gulp-notify')
 var stripDebug = require('gulp-strip-debug')
+var livereload = require('gulp-livereload')
 
 gulp.task('build', function () {
   var s = size()
@@ -39,6 +40,7 @@ gulp.task('build', function () {
 
   merge(js, html, clientFile, sharedFile)
     .pipe(gulp.dest('public'))
+    .pipe(livereload())
 
   merge(js.pipe(stripDebug()), html, clientFile, sharedFile)
     .pipe(zip('archive.zip'))
@@ -50,7 +52,9 @@ gulp.task('build', function () {
     }))
 })
 
+
 gulp.task('watch', function () {
+  livereload({start: true})
   gulp.watch(['./src/*.*'], ['build'])
 })
-gulp.task('default', ['watch'])
+gulp.task('default', [ 'watch'])

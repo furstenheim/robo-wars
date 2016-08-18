@@ -22,10 +22,12 @@
     "socket.io": "^1.4.6"
   },
   "devDependencies": {
+    "browser-sync": "^2.14.0",
     "gulp": "^3.9.1",
     "gulp-concat": "^2.6.0",
     "gulp-file": "^0.3.0",
     "gulp-htmlmin": "^2.0.0",
+    "gulp-livereload": "^3.8.1",
     "gulp-minify": "0.0.14",
     "gulp-notify": "^2.2.0",
     "gulp-rename": "^1.2.2",
