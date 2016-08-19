@@ -10,26 +10,24 @@ var size = require('gulp-size')
 var notify = require('gulp-notify')
 var stripDebug = require('gulp-strip-debug')
 var livereload = require('gulp-livereload')
+var concat = require('gulp-concat')
+var insert = require('gulp-insert')
 
 gulp.task('build', function () {
   var s = size()
-  var client = fs.readFileSync('./src/client.js').toString()
-  var shared = fs.readFileSync('./src/shared.js').toString()
-  var server = fs.readFileSync('./src/server.js').toString()
-  // Everything in functions so minify can work better
-  var final = `
-  (function () {
-  ${shared}
-  if (typeof window !== 'undefined') {
-  ${client}
-  } else {
-  (function() {
-  ${server}
-  })()}
-  })()
-  `
-  var js = file('server.js', final, {src: true})
-    .pipe(uglify())
+  var client = gulp.src('src/client/*.*')
+    .pipe(concat('client.js'))
+    .pipe(insert.wrap('if (typeof window !== \'undefined\') {(function (){', '})()}'))
+  var shared = gulp.src('src/shared/*.*')
+    .pipe(concat('shared.js'))
+  var server = gulp.src('src/server/*.*')
+    .pipe(concat('server.js'))
+    .pipe(insert.wrap('if (typeof window === \'undefined\') {(function (){', '})()}'))
+
+  var js = merge(shared, client, server)
+    .pipe(concat('server.js'))
+    .pipe(insert.wrap('(function () {', '})()'))
+
   // Just for the sake of having a public.js files as the rules
   var clientFile = file('client.js', '', {src: true})
   var sharedFile = file('shared.js', '', {src: true})
@@ -42,7 +40,7 @@ gulp.task('build', function () {
     .pipe(gulp.dest('public'))
     .pipe(livereload())
 
-  merge(js.pipe(stripDebug()), html, clientFile, sharedFile)
+  merge(js.pipe(stripDebug()).pipe(uglify()), html, clientFile, sharedFile)
     .pipe(zip('archive.zip'))
     .pipe(s)
     .pipe(gulp.dest('dist'))
@@ -55,6 +53,6 @@ gulp.task('build', function () {
 
 gulp.task('watch', function () {
   livereload({start: true})
-  gulp.watch(['./src/*.*'], ['build'])
+  gulp.watch(['./src/**/*.*'], ['build'])
 })
 gulp.task('default', [ 'watch'])
