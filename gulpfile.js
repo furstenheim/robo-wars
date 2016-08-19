@@ -15,7 +15,7 @@ var insert = require('gulp-insert')
 
 gulp.task('build', function () {
   var s = size()
-  var client = gulp.src('src/client/*.*')
+  var client = gulp.src(['src/client/init.js', 'src/client/*.*'])
     .pipe(concat('client.js'))
     .pipe(insert.wrap('if (typeof window !== \'undefined\') {(function (){', '})()}'))
   var shared = gulp.src('src/shared/*.*')
@@ -40,7 +40,10 @@ gulp.task('build', function () {
     .pipe(gulp.dest('public'))
     .pipe(livereload())
 
-  merge(js.pipe(stripDebug()).pipe(uglify()), html, clientFile, sharedFile)
+  var minifiedJs = js.pipe(stripDebug().on('error', function (e) {console.error(e)})).pipe(uglify()
+  )
+
+  merge(minifiedJs, html, clientFile, sharedFile)
     .pipe(zip('archive.zip'))
     .pipe(s)
     .pipe(gulp.dest('dist'))
@@ -48,6 +51,7 @@ gulp.task('build', function () {
       onLast: true,
       message: ()=> `Total size is ${s.prettySize}. Which is ${(s.size /13312 * 100).toFixed(2)} %`
     }))
+
 })
 
 

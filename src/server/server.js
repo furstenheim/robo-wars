@@ -157,7 +157,7 @@ module.exports = function (socket) {
 	var user = new User(socket);
 	users.push(user);
 	findOpponent(user);
-	
+
 	socket.on("disconnect", function () {
 		console.log("Disconnected: " + socket.id);
 		removeUser(user);

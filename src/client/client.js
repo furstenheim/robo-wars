@@ -26,7 +26,7 @@
      */
     function enableButtons() {
         for (var i = 0; i < buttons.length; i++) {
-            buttons[i].removeAttribute("disabled");
+            buttons[i].removeAttribute("disabled ");
         }
     }
 
