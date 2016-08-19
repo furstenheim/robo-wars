@@ -15,7 +15,7 @@ var insert = require('gulp-insert')
 
 gulp.task('build', function () {
   var s = size()
-  var client = gulp.src(['src/client/init.js', 'src/client/*.*'])
+  var client = gulp.src(['src/client/init.js', 'src/client/tiles.js', 'src/client/*.*'])
     .pipe(concat('client.js'))
     .pipe(insert.wrap('if (typeof window !== \'undefined\') {(function (){', '})()}'))
   var shared = gulp.src('src/shared/*.*')
