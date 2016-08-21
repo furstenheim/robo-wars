@@ -6,3 +6,4 @@ var GUESS_SCISSORS = 3;
 
 // global variable
 var g = {}
+function clone (object){return JSON.parse(JSON.stringify(object))}

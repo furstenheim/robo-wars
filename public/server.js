@@ -6,6 +6,7 @@ var GUESS_SCISSORS = 3;
 
 // global variable
 var g = {}
+function clone (object){return JSON.parse(JSON.stringify(object))}
 if (typeof window !== 'undefined') {(function (){g.Game = {
   init: function () {
     return {
@@ -108,6 +109,9 @@ g.Tile = {
     }
   },
   render: function (game, oldTile, newTile) {
+    if (!newTile){
+      return
+    }
     var realCoordinates = g.Game.getRealCoordinates(game, newTile.x, newTile.y)
     var c = g.c
     var floor = new Image()
@@ -248,23 +252,25 @@ g.Tiles = {
 
 g.store = {
   init: function () {
-    function Store() {
-      this.state = {
-        game: g.Game.init(),
-        tiles: [],
-        players: []
-      }
-      this.getState = function() {
-        return this.state
-      }
-      this.setState = function () {
-
+    g.store.state = {
+      game: g.Game.init(),
+      tiles: [],
+      players: []
+    }
+  },
+  prepareGame : function () {
+    var i,j,state = g.store.state, types = ['floor', 'hole'], type, newState = clone(state)
+    for(i=0; i < state.game.sx; i++) {
+      for (j =0; j < state.game.sy; j++) {
+        type = types[Math.floor(Math.random() * 2)]
+        newState.tiles.push(g.Tile.init(i, j, type))
       }
     }
+    g.store.render(state, newState)
   },
   render: function (oldState, newState, time) {
     var oldTiles = oldState.tiles
-    var newTiles = oldState.tiles
+    var newTiles = newState.tiles
     var game = newState.game
     var i
     // First go the tiles
@@ -272,7 +278,7 @@ g.store = {
       g.Tile.render(game, oldTiles[i], newTiles[i])
     }
     var oldPlayers = oldState.players
-    var newPlayers = newPlayers.players
+    var newPlayers = newState.players
     for (i=0; i<Math.max(oldPlayers, newPlayers); i++) {
       g.PlayerTile.render(game, oldPlayers[i], newPlayers[i], time)
     }
@@ -281,6 +287,9 @@ g.store = {
 /* init variables here */
 g.canvas = document.getElementById('c')
 g.c = g.canvas.getContext('2d')
+g.store.init()
+g.store.prepareGame()
+/*
 var tile = g.Tile.init(4,4,'floor')
 var game = g.game = new g.Game.init()
 g.Tile.render(game, tile)
@@ -297,7 +306,7 @@ var interval = setInterval( function () {
   }
   g.Tile.render(game, tile)
   g.PlayerTile.render(game, player, nextPlayer, t)
-}, 2000 / length)
+}, 2000 / length)*/
 })()}
 if (typeof window === 'undefined') {(function (){"use strict";
 

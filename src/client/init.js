@@ -1,6 +1,9 @@
 /* init variables here */
 g.canvas = document.getElementById('c')
 g.c = g.canvas.getContext('2d')
+g.store.init()
+g.store.prepareGame()
+/*
 var tile = g.Tile.init(4,4,'floor')
 var game = g.game = new g.Game.init()
 g.Tile.render(game, tile)
@@ -17,4 +20,4 @@ var interval = setInterval( function () {
   }
   g.Tile.render(game, tile)
   g.PlayerTile.render(game, player, nextPlayer, t)
-}, 2000 / length)
+}, 2000 / length)*/

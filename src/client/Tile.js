@@ -7,6 +7,9 @@ g.Tile = {
     }
   },
   render: function (game, oldTile, newTile) {
+    if (!newTile){
+      return
+    }
     var realCoordinates = g.Game.getRealCoordinates(game, newTile.x, newTile.y)
     var c = g.c
     var floor = new Image()
