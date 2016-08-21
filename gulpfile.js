@@ -12,10 +12,11 @@ var stripDebug = require('gulp-strip-debug')
 var livereload = require('gulp-livereload')
 var concat = require('gulp-concat')
 var insert = require('gulp-insert')
+var clone = require('gulp-clone')
 
 gulp.task('build', function () {
   var s = size()
-  var client = gulp.src(['src/client/*.*','src/client/init.js'])
+  var client = merge(gulp.src(['src/client/*.*','!src/client/init.js']), gulp.src(['src/client/init.js']))
     .pipe(concat('client.js'))
     .pipe(insert.wrap('if (typeof window !== \'undefined\') {(function (){', '})()}'))
   var shared = gulp.src('src/shared/*.*')
@@ -40,8 +41,7 @@ gulp.task('build', function () {
     .pipe(gulp.dest('public'))
     .pipe(livereload())
 
-  var minifiedJs = js.pipe(stripDebug().on('error', function (e) {console.error(e)})).pipe(uglify()
-  )
+  var minifiedJs = js.pipe(clone()).pipe(stripDebug().on('error', function (e) {console.error(e)})).pipe(uglify())
   // So we can quickly check minification is right
   minifiedJs.pipe(gulp.dest('dist'))
   merge(minifiedJs, html, clientFile, sharedFile)

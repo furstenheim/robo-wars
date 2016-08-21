@@ -24,6 +24,7 @@
   "devDependencies": {
     "browser-sync": "^2.14.0",
     "gulp": "^3.9.1",
+    "gulp-clone": "^1.0.0",
     "gulp-concat": "^2.6.0",
     "gulp-file": "^0.3.0",
     "gulp-htmlmin": "^2.0.0",
