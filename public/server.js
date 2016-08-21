@@ -6,24 +6,46 @@ var GUESS_SCISSORS = 3;
 
 // global variable
 var g = {}
-if (typeof window !== 'undefined') {(function (){g.Game = function () {
-  this.height = 400
-  this.width = 400
-  // number of columns
-  this.spanX = 10
-  this.spanY = 10
-
-  this.getRealCoordinates = function (x, y) {
-    var game = this
+if (typeof window !== 'undefined') {(function (){g.Game = {
+  init: function () {
     return {
-      x: x * game.width / game.spanX,
-      y: y * game.height / game.spanY,
-      w: game.width / game.spanX,
-      h: game.height / game.spanY
+      h: 400,
+      w: 400,
+      sx: 10,
+      sy: 10
+    }
+  },
+  getRealCoordinates: function (game, x,y) {
+    return {
+      x: x * game.w / game.sx,
+      y: y * game.h / game.sy,
+      w: game.w / game.sx,
+      h: game.h / game.sy
     }
   }
-  return this
+
 }
+/*
+function () {
+    this.height = 400
+    this.width = 400
+    // number of columns
+    this.spanX = 10
+    this.spanY = 10
+
+    this.getRealCoordinates = function (x, y) {
+      var game = this
+      return {
+        x: x * game.width / game.spanX,
+        y: y * game.height / game.spanY,
+        w: game.width / game.spanX,
+        h: game.height / game.spanY
+      }
+    }
+    return this
+  }
+}*/
+
 g.PlayerTile = {
   init: function (x, y, playerType, theta) {
     return {
@@ -35,8 +57,8 @@ g.PlayerTile = {
   },
   render: function (game, oldState, newState, time) {
     time = Math.min(Math.max(time, 0), 1)
-    var initialCoordinates = game.getRealCoordinates(oldState.x, oldState.y)
-    var finalCoordinates = game.getRealCoordinates(newState.x, newState.y)
+    var initialCoordinates = g.Game.getRealCoordinates(game, oldState.x, oldState.y)
+    var finalCoordinates = g.Game.getRealCoordinates(game,newState.x, newState.y)
     var c = g.c
     var newX = (1-time) * initialCoordinates.x + time * finalCoordinates.x
     var newY = (1-time) * initialCoordinates.y + time * finalCoordinates.y
@@ -73,7 +95,7 @@ g.Tile = {
     }
   },
   render: function (game, tile) {
-    var realCoordinates = game.getRealCoordinates(tile.x, tile.y)
+    var realCoordinates = g.Game.getRealCoordinates(game, tile.x, tile.y)
     var c = g.c
     var floor = new Image()
     floor.src = g.Tiles[tile.type]
@@ -84,7 +106,8 @@ g.Tile = {
 g.Tiles = {}
 g.Tiles = {
   floor: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAYAAAAGCAYAAADgzO9IAAAABmJLR0QA/wD/AP+gvaeTAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH4AgSERAr62pHoQAAABl0RVh0Q29tbWVudABDcmVhdGVkIHdpdGggR0lNUFeBDhcAAAAWSURBVAjXY5wRzv2fAQtgYsAB6CEBACasAgXtJRiTAAAAAElFTkSuQmCC',
-  player: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAYAAAAGCAYAAADgzO9IAAAABmJLR0QA/wD/AP+gvaeTAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH4AgVCCEdbK11zAAAABl0RVh0Q29tbWVudABDcmVhdGVkIHdpdGggR0lNUFeBDhcAAAA7SURBVAjXVc0xEsAwDALBtSb/f3IuhZ3CNAIhxKqAtTapBXMtrwOq9txS9PzRH2VoBpeBF83+drpOC3zWRRv/dpHcTgAAAABJRU5ErkJggg=='
+  player: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAYAAAAGCAYAAADgzO9IAAAABmJLR0QA/wD/AP+gvaeTAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH4AgVCCEdbK11zAAAABl0RVh0Q29tbWVudABDcmVhdGVkIHdpdGggR0lNUFeBDhcAAAA7SURBVAjXVc0xEsAwDALBtSb/f3IuhZ3CNAIhxKqAtTapBXMtrwOq9txS9PzRH2VoBpeBF83+drpOC3zWRRv/dpHcTgAAAABJRU5ErkJggg==',
+  hole: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAYAAAAGCAYAAADgzO9IAAAABmJLR0QA/wD/AP+gvaeTAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH4AgVCicOvc1H+gAAABl0RVh0Q29tbWVudABDcmVhdGVkIHdpdGggR0lNUFeBDhcAAAAcSURBVAjXY2RgYPjPgAUwMeAA5Ev8RZdgxGU5ANPcAwYrkLWxAAAAAElFTkSuQmCC'
 }
 "use strict";
 
@@ -210,11 +233,17 @@ g.Tiles = {
 
 })();
 
+g.dispatcher = {
+
+}
+g.store = {
+  
+}
 /* init variables here */
 g.canvas = document.getElementById('c')
 g.c = g.canvas.getContext('2d')
 var tile = g.Tile.init(4,4,'floor')
-var game = g.game = new g.Game()
+var game = g.game = new g.Game.init()
 g.Tile.render(game, tile)
 var player = g.PlayerTile.init(4,4, 'player', 0)
 g.PlayerTile.render(game, player, player, 0)

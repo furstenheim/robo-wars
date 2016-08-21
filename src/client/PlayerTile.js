@@ -9,8 +9,8 @@ g.PlayerTile = {
   },
   render: function (game, oldState, newState, time) {
     time = Math.min(Math.max(time, 0), 1)
-    var initialCoordinates = game.getRealCoordinates(oldState.x, oldState.y)
-    var finalCoordinates = game.getRealCoordinates(newState.x, newState.y)
+    var initialCoordinates = g.Game.getRealCoordinates(game, oldState.x, oldState.y)
+    var finalCoordinates = g.Game.getRealCoordinates(game,newState.x, newState.y)
     var c = g.c
     var newX = (1-time) * initialCoordinates.x + time * finalCoordinates.x
     var newY = (1-time) * initialCoordinates.y + time * finalCoordinates.y

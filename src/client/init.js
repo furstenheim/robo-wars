@@ -2,7 +2,7 @@
 g.canvas = document.getElementById('c')
 g.c = g.canvas.getContext('2d')
 var tile = g.Tile.init(4,4,'floor')
-var game = g.game = new g.Game()
+var game = g.game = new g.Game.init()
 g.Tile.render(game, tile)
 var player = g.PlayerTile.init(4,4, 'player', 0)
 g.PlayerTile.render(game, player, player, 0)
