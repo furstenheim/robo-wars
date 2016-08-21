@@ -6,11 +6,11 @@ g.Tile = {
       type: tileType
     }
   },
-  render: function (game, tile) {
-    var realCoordinates = g.Game.getRealCoordinates(game, tile.x, tile.y)
+  render: function (game, oldTile, newTile) {
+    var realCoordinates = g.Game.getRealCoordinates(game, newTile.x, newTile.y)
     var c = g.c
     var floor = new Image()
-    floor.src = g.Tiles[tile.type]
+    floor.src = g.Tiles[newTile.type]
     c.drawImage(floor, realCoordinates.x, realCoordinates.y, realCoordinates.w, realCoordinates.h)
   }
 }

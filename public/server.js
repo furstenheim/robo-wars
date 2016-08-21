@@ -56,25 +56,38 @@ g.PlayerTile = {
     }
   },
   render: function (game, oldState, newState, time) {
-    time = Math.min(Math.max(time, 0), 1)
-    var initialCoordinates = g.Game.getRealCoordinates(game, oldState.x, oldState.y)
+    if (!newState) {
+      return
+    }
     var finalCoordinates = g.Game.getRealCoordinates(game,newState.x, newState.y)
+    var newX
+    var newY
+    var theta
+    time = Math.min(Math.max(time, 0), 1)
+    if (!oldState) {
+      newX = finalCoordinates.x
+      newY = finalCoordinates.y
+      theta = newState.t
+    } else {
+      var initialCoordinates = g.Game.getRealCoordinates(game, oldState.x, oldState.y)
+      newX = (1-time) * initialCoordinates.x + time * finalCoordinates.x
+      newY = (1-time) * initialCoordinates.y + time * finalCoordinates.y
+      theta = (1- time) * (oldState.t) + time * (newState.t)
+    }
     var c = g.c
-    var newX = (1-time) * initialCoordinates.x + time * finalCoordinates.x
-    var newY = (1-time) * initialCoordinates.y + time * finalCoordinates.y
     g.c.save()
-    var halfImageWidth = initialCoordinates.w / 2
-    var halfImageHeight = initialCoordinates.h /2
+    var halfImageWidth = finalCoordinates.w / 2
+    var halfImageHeight = finalCoordinates.h /2
     g.c.translate(newX + halfImageWidth, newY + halfImageHeight)
-    g.c.rotate((1- time) * (oldState.t) + time * (newState.t))
+    g.c.rotate(theta)
     var player = new Image()
-    player.src = g.Tiles[oldState.type]
+    player.src = g.Tiles[newState.type]
     c.drawImage(
       player,
       -halfImageHeight,
       -halfImageWidth,
-      initialCoordinates.w,
-      initialCoordinates.h)
+      halfImageWidth * 2,
+      halfImageHeight * 2)
     g.c.restore()
   },
   changeState: function (player, dx, dy, dt) {
@@ -94,11 +107,11 @@ g.Tile = {
       type: tileType
     }
   },
-  render: function (game, tile) {
-    var realCoordinates = g.Game.getRealCoordinates(game, tile.x, tile.y)
+  render: function (game, oldTile, newTile) {
+    var realCoordinates = g.Game.getRealCoordinates(game, newTile.x, newTile.y)
     var c = g.c
     var floor = new Image()
-    floor.src = g.Tiles[tile.type]
+    floor.src = g.Tiles[newTile.type]
     c.drawImage(floor, realCoordinates.x, realCoordinates.y, realCoordinates.w, realCoordinates.h)
   }
 }
@@ -233,11 +246,37 @@ g.Tiles = {
 
 })();
 
-g.dispatcher = {
-
-}
 g.store = {
-  
+  init: function () {
+    function Store() {
+      this.state = {
+        game: g.Game.init(),
+        tiles: [],
+        players: []
+      }
+      this.getState = function() {
+        return this.state
+      }
+      this.setState = function () {
+
+      }
+    }
+  },
+  render: function (oldState, newState, time) {
+    var oldTiles = oldState.tiles
+    var newTiles = oldState.tiles
+    var game = newState.game
+    var i
+    // First go the tiles
+    for (i=0; i<Math.max(oldTiles.length, newTiles.length); i++) {
+      g.Tile.render(game, oldTiles[i], newTiles[i])
+    }
+    var oldPlayers = oldState.players
+    var newPlayers = newPlayers.players
+    for (i=0; i<Math.max(oldPlayers, newPlayers); i++) {
+      g.PlayerTile.render(game, oldPlayers[i], newPlayers[i], time)
+    }
+  }
 }
 /* init variables here */
 g.canvas = document.getElementById('c')
