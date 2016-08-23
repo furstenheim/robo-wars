@@ -7,13 +7,12 @@ g.store = {
     }
   },
   prepareGame : function () {
-    var i,j,state = g.store.state, types = ['floor', 'hole'], type, newState = clone(state)
-    for(i=0; i < state.game.sx; i++) {
-      for (j =0; j < state.game.sy; j++) {
-        type = types[Math.floor(Math.random() * 2)]
-        newState.tiles.push(g.Tile.init(i, j, type))
-      }
-    }
+    var state = g.store.state, newState = clone(state), game = state.game
+    var result = g.Game.prepareGame(game)
+    newState.tiles = result.tiles
+    newState.players = result.players
+    g.store.state = newState
+    g.store.oldState = state
     g.store.render(state, newState)
   },
   render: function (oldState, newState, time) {
@@ -27,8 +26,8 @@ g.store = {
     }
     var oldPlayers = oldState.players
     var newPlayers = newState.players
-    for (i=0; i<Math.max(oldPlayers, newPlayers); i++) {
-      g.PlayerTile.render(game, oldPlayers[i], newPlayers[i], time)
+    for (i=0; i<Math.max(oldPlayers.length, newPlayers.length); i++) {
+      g.PlayerTile.render(game, (oldPlayers[i] || {}).t, (newPlayers[i] || {}).t, time)
     }
   }
 }

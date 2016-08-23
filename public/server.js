@@ -10,10 +10,11 @@ function clone (object){return JSON.parse(JSON.stringify(object))}
 if (typeof window !== 'undefined') {(function (){g.Game = {
   init: function () {
     return {
-      h: 400,
-      w: 400,
-      sx: 10,
-      sy: 10
+      h: 800,
+      w: 800,
+      sx: 30,
+      sy: 30,
+      np: 4
     }
   },
   getRealCoordinates: function (game, x,y) {
@@ -23,6 +24,19 @@ if (typeof window !== 'undefined') {(function (){g.Game = {
       w: game.w / game.sx,
       h: game.h / game.sy
     }
+  },
+  prepareGame: function (game) {
+    var i,j, types = ['floor', 'hole'], type, tiles=[], players=[], distorsionsx = [0, 1/2, 0.99, 1/2],distorsionsy = [ 1/2, 0, 1/2, 0.99]
+    for (i=0; i<game.np; i++) {
+      players.push(g.Player.init(~~ (distorsionsx[i] * game.sx), ~~ (distorsionsy[i] * game.sy), 'player', 0))
+    }
+    for (i=0; i < game.sx; i++) {
+      for (j =0; j < game.sy; j++) {
+        type = types[Math.floor(Math.random() * 2)]
+        tiles.push(g.Tile.init(i, j, type))
+      }
+    }
+    return {players: players, tiles: tiles}
   }
 
 }
@@ -47,6 +61,14 @@ function () {
   }
 }*/
 
+g.Player = {
+  init: function (x, y, playerType, theta) {
+    var tile = g.PlayerTile.init(x, y, playerType, theta)
+    return {
+      t: tile
+    }
+  }
+}
 g.PlayerTile = {
   init: function (x, y, playerType, theta) {
     return {
@@ -259,13 +281,12 @@ g.store = {
     }
   },
   prepareGame : function () {
-    var i,j,state = g.store.state, types = ['floor', 'hole'], type, newState = clone(state)
-    for(i=0; i < state.game.sx; i++) {
-      for (j =0; j < state.game.sy; j++) {
-        type = types[Math.floor(Math.random() * 2)]
-        newState.tiles.push(g.Tile.init(i, j, type))
-      }
-    }
+    var state = g.store.state, newState = clone(state), game = state.game
+    var result = g.Game.prepareGame(game)
+    newState.tiles = result.tiles
+    newState.players = result.players
+    g.store.state = newState
+    g.store.oldState = state
     g.store.render(state, newState)
   },
   render: function (oldState, newState, time) {
@@ -279,8 +300,8 @@ g.store = {
     }
     var oldPlayers = oldState.players
     var newPlayers = newState.players
-    for (i=0; i<Math.max(oldPlayers, newPlayers); i++) {
-      g.PlayerTile.render(game, oldPlayers[i], newPlayers[i], time)
+    for (i=0; i<Math.max(oldPlayers.length, newPlayers.length); i++) {
+      g.PlayerTile.render(game, (oldPlayers[i] || {}).t, (newPlayers[i] || {}).t, time)
     }
   }
 }
@@ -289,24 +310,7 @@ g.canvas = document.getElementById('c')
 g.c = g.canvas.getContext('2d')
 g.store.init()
 g.store.prepareGame()
-/*
-var tile = g.Tile.init(4,4,'floor')
-var game = g.game = new g.Game.init()
-g.Tile.render(game, tile)
-var player = g.PlayerTile.init(4,4, 'player', 0)
-g.PlayerTile.render(game, player, player, 0)
 
-var nextPlayer = g.PlayerTile.changeState(player, 0, 0, Math.PI / 2)
-var t = 0
-var length = 50
-var interval = setInterval( function () {
-  t += 1 / length
-  if (t > 1) {
-    clearInterval(interval)
-  }
-  g.Tile.render(game, tile)
-  g.PlayerTile.render(game, player, nextPlayer, t)
-}, 2000 / length)*/
 })()}
 if (typeof window === 'undefined') {(function (){"use strict";
 
