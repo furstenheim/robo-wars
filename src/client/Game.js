@@ -17,9 +17,9 @@ g.Game = {
     }
   },
   prepareGame: function (game) {
-    var i,j, types = ['floor', 'hole'], type, tiles=[], players=[], distorsionsx = [0, 1/2, 0.99, 1/2],distorsionsy = [ 1/2, 0, 1/2, 0.99]
+    var i,j, types = ['floor', 'hole'], type, tiles=[], players=[], distorsionsx = [0, 1/2, 0.99, 1/2],distorsionsy = [ 1/2, 0, 1/2, 0.99], distorsionst = [1/2, -1, -1/2, 0 ]
     for (i=0; i<game.np; i++) {
-      players.push(g.Player.init(~~ (distorsionsx[i] * game.sx), ~~ (distorsionsy[i] * game.sy), 'player', 0))
+      players.push(g.Player.init(~~ (distorsionsx[i] * game.sx), ~~ (distorsionsy[i] * game.sy), 'player', (distorsionst[i] * Math.PI)))
     }
     for (i=0; i < game.sx; i++) {
       for (j =0; j < game.sy; j++) {
