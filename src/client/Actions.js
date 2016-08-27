@@ -3,5 +3,8 @@ g.Actions = {
     return {
       players :[]
     }
+  },
+  types: {
+    player: 'player'
   }
 }

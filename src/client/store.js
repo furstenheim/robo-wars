@@ -33,7 +33,7 @@ g.store = {
     }
   },
   display: function () {
-    var state = g.store.state, newState = clone(state), game = state.game. remainingActions = newState.remainingActions, postActions = newState.postActions, nextActions
+    var state = g.store.state, newState = clone(state), game = state.game, remainingActions = newState.remainingActions, postActions = newState.postActions, nextActions
     // we need to do post Actions
     if (postActions.length) {
       // TODO laser, holes, lives...
@@ -45,9 +45,12 @@ g.store = {
     for (let nextAction of nextActions) {
       g.store.handleAction(newState, nextAction)
     }
+    g.store.oldState = state
+    g.store.state = newState
+    g.store.render(state, newState, 1)
   },
   handleAction: function (state, action) {
-    if (action.type === 'player') {
+    if (action.type === g.Actions.types.player) {
       state.players[action.player] = g.Player.handleAction(state.players[action.player], action)
     }
   }
