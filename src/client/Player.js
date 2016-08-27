@@ -15,10 +15,11 @@ g.Player = {
       return g.Player.init(Complex.add(player.c, player.o), player.type, player.o)
     }
     if (subtype === 'rotateLeft') {
-      return g.Player.init(player.c, player.type, Complex.multiply(player.o, {x:0, y: 1}))
+      return g.Player.init(player.c, player.type, Complex.multiply(player.o, {x:0, y: -1}))
     }
     if (subtype === 'rotateRight') {
-      return g.Player.init(player.c, player.type, Complex.multiply(player.o, {x:0, y: -1}))
+      // Canvas coordinates grow from top to bottom so orientation is the other sign as usual
+      return g.Player.init(player.c, player.type, Complex.multiply(player.o, {x:0, y: 1}))
     }
     if (subtype === 'backwards') {
       return g.Player.init(Complex.add(player.c, Complex.multiply({x:-1, y:0}, player.o)), player.type, player.o)

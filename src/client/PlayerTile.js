@@ -15,7 +15,7 @@ g.PlayerTile = {
     var newX
     var newY
     var theta
-    time = Math.min(Math.max(time, 0), 1)
+    time = Math.min(Math.max(time, 0), g.store.movement) / g.store.movement
     if (!oldState) {
       newX = finalCoordinates.x
       newY = finalCoordinates.y

@@ -8,6 +8,9 @@ g.store = {
       postActions:[]
     }
   },
+  movement: 500,
+  // tick depends movement so we need this wizardy
+  get tick() { return this.movement / 24 },
   prepareGame : function () {
     var state = g.store.state, newState = clone(state), game = state.game
     var result = g.Game.prepareGame(game)
@@ -33,21 +36,36 @@ g.store = {
     }
   },
   display: function () {
-    var state = g.store.state, newState = clone(state), game = state.game, remainingActions = newState.remainingActions, postActions = newState.postActions, nextActions
+    var oldState = g.store.oldState, state = g.store.state, newState = clone(state), game = state.game, animating = g.store.animating,
+      time = g.store.time, remainingActions = newState.remainingActions, postActions = newState.postActions, nextActions
     // we need to do post Actions
+    if (animating) {
+      time+= g.store.tick
+      // Leave one tick to make sure we draw the end of it
+      if (time > g.store.movement + g.store.tick + 1) {
+        g.store.time = 0
+        g.store.animating = false
+      } else {
+        g.store.time = time
+        return g.store.render(oldState, state, time)
+      }
+    }
+
     if (postActions.length) {
       // TODO laser, holes, lives...
     }
     if (!remainingActions.length) {
       return
     }
-    nextActions = remainingActions.pop()
+    nextActions = remainingActions.shift()
     for (let nextAction of nextActions) {
       g.store.handleAction(newState, nextAction)
     }
     g.store.oldState = state
     g.store.state = newState
-    g.store.render(state, newState, 1)
+    g.store.animating = true
+    g.store.time = 0
+    g.store.render(state, newState, g.store.time)
   },
   handleAction: function (state, action) {
     if (action.type === g.Actions.types.player) {

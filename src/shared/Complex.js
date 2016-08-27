@@ -1,13 +1,9 @@
 // Use complex to rotate, move on the plane
 function Complex (x, y) {
-  if (! new.target) {
-    return new Complex(x,y)
-  }
   if (Array.isArray(x)) {
-    return new Complex(x[0], x[1])
+    return Complex(x[0], x[1])
   }
-  this.x = x
-  this.y = y
+  return {x:x, y:y}
 }
 
 // No method overloadin :(

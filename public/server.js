@@ -1,14 +1,10 @@
 (function () {"use strict"
 // Use complex to rotate, move on the plane
 function Complex (x, y) {
-  if (! new.target) {
-    return new Complex(x,y)
-  }
   if (Array.isArray(x)) {
-    return new Complex(x[0], x[1])
+    return Complex(x[0], x[1])
   }
-  this.x = x
-  this.y = y
+  return {x:x, y:y}
 }
 
 // No method overloadin :(
@@ -125,10 +121,11 @@ g.Player = {
       return g.Player.init(Complex.add(player.c, player.o), player.type, player.o)
     }
     if (subtype === 'rotateLeft') {
-      return g.Player.init(player.c, player.type, Complex.multiply(player.o, {x:0, y: 1}))
+      return g.Player.init(player.c, player.type, Complex.multiply(player.o, {x:0, y: -1}))
     }
     if (subtype === 'rotateRight') {
-      return g.Player.init(player.c, player.type, Complex.multiply(player.o, {x:0, y: -1}))
+      // Canvas coordinates grow from top to bottom so orientation is the other sign as usual
+      return g.Player.init(player.c, player.type, Complex.multiply(player.o, {x:0, y: 1}))
     }
     if (subtype === 'backwards') {
       return g.Player.init(Complex.add(player.c, Complex.multiply({x:-1, y:0}, player.o)), player.type, player.o)
@@ -153,7 +150,7 @@ g.PlayerTile = {
     var newX
     var newY
     var theta
-    time = Math.min(Math.max(time, 0), 1)
+    time = Math.min(Math.max(time, 0), g.store.movement) / g.store.movement
     if (!oldState) {
       newX = finalCoordinates.x
       newY = finalCoordinates.y
@@ -349,6 +346,9 @@ g.store = {
       postActions:[]
     }
   },
+  movement: 500,
+  // tick depends movement so we need this wizardy
+  get tick() { return this.movement / 24 },
   prepareGame : function () {
     var state = g.store.state, newState = clone(state), game = state.game
     var result = g.Game.prepareGame(game)
@@ -374,21 +374,36 @@ g.store = {
     }
   },
   display: function () {
-    var state = g.store.state, newState = clone(state), game = state.game, remainingActions = newState.remainingActions, postActions = newState.postActions, nextActions
+    var oldState = g.store.oldState, state = g.store.state, newState = clone(state), game = state.game, animating = g.store.animating,
+      time = g.store.time, remainingActions = newState.remainingActions, postActions = newState.postActions, nextActions
     // we need to do post Actions
+    if (animating) {
+      time+= g.store.tick
+      // Leave one tick to make sure we draw the end of it
+      if (time > g.store.movement + g.store.tick + 1) {
+        g.store.time = 0
+        g.store.animating = false
+      } else {
+        g.store.time = time
+        return g.store.render(oldState, state, time)
+      }
+    }
+
     if (postActions.length) {
       // TODO laser, holes, lives...
     }
     if (!remainingActions.length) {
       return
     }
-    nextActions = remainingActions.pop()
+    nextActions = remainingActions.shift()
     for (let nextAction of nextActions) {
       g.store.handleAction(newState, nextAction)
     }
     g.store.oldState = state
     g.store.state = newState
-    g.store.render(state, newState, 1)
+    g.store.animating = true
+    g.store.time = 0
+    g.store.render(state, newState, g.store.time)
   },
   handleAction: function (state, action) {
     if (action.type === g.Actions.types.player) {
@@ -401,18 +416,24 @@ g.canvas = document.getElementById('c')
 g.c = g.canvas.getContext('2d')
 g.store.init()
 g.store.prepareGame()
+var interval = setInterval(g.store.display, g.store.tick)
 g.store.state.remainingActions = [[
-  {type:g.Actions.types.player, player: 0, subtype: 'forward'},
-  {type:g.Actions.types.player, player: 1, subtype: 'rotateRight'},
-  {type:g.Actions.types.player, player: 2, subtype: 'rotateLeft'},
-  {type:g.Actions.types.player, player: 3, subtype: 'forward'}]]
+/*  {type:g.Actions.types.player, player: 0, subtype: 'forward'},
+  {type:g.Actions.types.player, player: 1, subtype: 'rotateRight'},*/
+  {type:g.Actions.types.player, player: 2, subtype: 'rotateLeft'}/*,
+  {type:g.Actions.types.player, player: 3, subtype: 'forward'}*/],
+  [/*
+    {type:g.Actions.types.player, player: 0, subtype: 'forward'},
+    {type:g.Actions.types.player, player: 1, subtype: 'backwards'},*/
+    {type:g.Actions.types.player, player: 2, subtype: 'rotateLeft'}/*,
+    {type:g.Actions.types.player, player: 3, subtype: 'forward'}*/]]
+/*
 g.store.display()
-g.store.state.remainingActions = [[
-  {type:g.Actions.types.player, player: 0, subtype: 'forward'},
-  {type:g.Actions.types.player, player: 1, subtype: 'backwards'},
-  {type:g.Actions.types.player, player: 2, subtype: 'rotateLeft'},
-  {type:g.Actions.types.player, player: 3, subtype: 'forward'}]]
-g.store.display()})()}
+*/
+//g.store.state.remainingActions.concat([])
+/*
+g.store.display()*/
+setTimeout(function (){clearInterval(interval)},10000)})()}
 if (typeof window === 'undefined') {(function (){"use strict";
 
 /**
