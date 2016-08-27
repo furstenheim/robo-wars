@@ -17,9 +17,9 @@ g.Game = {
     }
   },
   prepareGame: function (game) {
-    var i,j, types = ['floor', 'hole'], type, tiles=[], players=[], distorsionsx = [0, 1/2, 0.99, 1/2],distorsionsy = [ 1/2, 0, 1/2, 0.99], distorsionst = [1/2, -1, -1/2, 0 ]
+    var i,j, types = ['floor', 'floor'], type, tiles=[], players=[], distorsionsx = [0, 1/2, 0.99, 1/2],distorsionsy = [ 1/2, 0, 1/2, 0.99], distorsionst = [[1, 0], [0,1], [-1, 0], [0, -1]]
     for (i=0; i<game.np; i++) {
-      players.push(g.Player.init(~~ (distorsionsx[i] * game.sx), ~~ (distorsionsy[i] * game.sy), 'player', (distorsionst[i] * Math.PI)))
+      players.push(g.Player.init(Complex(~~ (distorsionsx[i] * game.sx), ~~ (distorsionsy[i] * game.sy)), 'player', Complex(distorsionst[i])))
     }
     for (i=0; i < game.sx; i++) {
       for (j =0; j < game.sy; j++) {
@@ -31,23 +31,3 @@ g.Game = {
   }
 
 }
-/*
-function () {
-    this.height = 400
-    this.width = 400
-    // number of columns
-    this.spanX = 10
-    this.spanY = 10
-
-    this.getRealCoordinates = function (x, y) {
-      var game = this
-      return {
-        x: x * game.width / game.spanX,
-        y: y * game.height / game.spanY,
-        w: game.width / game.spanX,
-        h: game.height / game.spanY
-      }
-    }
-    return this
-  }
-}*/

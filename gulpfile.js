@@ -13,7 +13,7 @@ var livereload = require('gulp-livereload')
 var concat = require('gulp-concat')
 var insert = require('gulp-insert')
 var clone = require('gulp-clone')
-
+var babel = require('gulp-babel')
 gulp.task('build', function () {
   var s = size()
   var client = merge(gulp.src(['src/client/*.*','!src/client/init.js']), gulp.src(['src/client/init.js']))
@@ -27,7 +27,7 @@ gulp.task('build', function () {
 
   var js = merge(shared, client, server)
     .pipe(concat('server.js'))
-    .pipe(insert.wrap('(function () {', '})()'))
+    .pipe(insert.wrap('(function () {"use strict"\n', '})()'))
 
   // Just for the sake of having a public.js files as the rules
   var clientFile = file('client.js', '', {src: true})
@@ -41,7 +41,7 @@ gulp.task('build', function () {
     .pipe(gulp.dest('public'))
     .pipe(livereload())
 
-  var minifiedJs = js.pipe(clone()).pipe(stripDebug().on('error', function (e) {console.error(e)})).pipe(uglify())
+  var minifiedJs = js.pipe(clone()).pipe(stripDebug().on('error', function (e) {console.error(e)})).pipe(babel({presets:['babili']}))
   // So we can quickly check minification is right
   minifiedJs.pipe(gulp.dest('dist'))
   merge(minifiedJs, html, clientFile, sharedFile)

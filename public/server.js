@@ -1,4 +1,39 @@
-(function () {/* Shared variables and global js variables (better here than global so they can be minified */
+(function () {"use strict"
+// Use complex to rotate, move on the plane
+function Complex (x, y) {
+  if (! new.target) {
+    return new Complex(x,y)
+  }
+  if (Array.isArray(x)) {
+    return new Complex(x[0], x[1])
+  }
+  this.x = x
+  this.y = y
+}
+
+// No method overloadin :(
+Complex.sum = function(c1, c2) {
+  return  new Complex(c1.x + c2.x, c1.y + c2.y)
+}
+
+Complex.multiply = function (c1, c2) {
+  return new Complex(c1.x * c2.x - c1.y * c2.y, c1.x * c2.y + c1.y * c2.x)
+}
+
+//This only works 1, -1, i -i we should not need more than that
+Complex.prototype.getTheta = function () {
+  if (this.x === 0) {
+    if (this.y === 1) {
+      return 1 * P
+    }
+    return 3 * P
+  }
+  if (this.x === 1) {
+    return 0
+  }
+  return 2 * P
+}
+/* Shared variables and global js variables (better here than global so they can be minified */
 var GUESS_NO = 0;
 var GUESS_ROCK = 1;
 var GUESS_PAPER = 2;
@@ -7,7 +42,36 @@ var GUESS_SCISSORS = 3;
 // global variable
 var g = {}
 function clone (object){return JSON.parse(JSON.stringify(object))}
-if (typeof window !== 'undefined') {(function (){g.Game = {
+// Half PI
+var P = Math.PI / 2
+if (typeof window !== 'undefined') {(function (){g.Action = {
+  init: function (type, params) {
+    var action
+    switch (type) {
+      case 'playerMovement':
+        action = g.Action.player(params)
+        break
+      default:
+        action = {}
+        break
+    }
+    return Object.assign(action, {type: type})
+  },
+  playerMovement: function (params) {
+    return {
+      subtype: params.type,
+      player: params.player
+    }
+  }
+}
+g.Actions = {
+  init: function () {
+    return {
+      players :[]
+    }
+  }
+}
+g.Game = {
   init: function () {
     return {
       h: 800,
@@ -26,9 +90,9 @@ if (typeof window !== 'undefined') {(function (){g.Game = {
     }
   },
   prepareGame: function (game) {
-    var i,j, types = ['floor', 'hole'], type, tiles=[], players=[], distorsionsx = [0, 1/2, 0.99, 1/2],distorsionsy = [ 1/2, 0, 1/2, 0.99], distorsionst = [1/2, -1, -1/2, 0 ]
+    var i,j, types = ['floor', 'floor'], type, tiles=[], players=[], distorsionsx = [0, 1/2, 0.99, 1/2],distorsionsy = [ 1/2, 0, 1/2, 0.99], distorsionst = [[1, 0], [0,1], [-1, 0], [0, -1]]
     for (i=0; i<game.np; i++) {
-      players.push(g.Player.init(~~ (distorsionsx[i] * game.sx), ~~ (distorsionsy[i] * game.sy), 'player', (distorsionst[i] * Math.PI)))
+      players.push(g.Player.init(Complex(~~ (distorsionsx[i] * game.sx), ~~ (distorsionsy[i] * game.sy)), 'player', Complex(distorsionst[i])))
     }
     for (i=0; i < game.sx; i++) {
       for (j =0; j < game.sy; j++) {
@@ -40,34 +104,23 @@ if (typeof window !== 'undefined') {(function (){g.Game = {
   }
 
 }
-/*
-function () {
-    this.height = 400
-    this.width = 400
-    // number of columns
-    this.spanX = 10
-    this.spanY = 10
-
-    this.getRealCoordinates = function (x, y) {
-      var game = this
-      return {
-        x: x * game.width / game.spanX,
-        y: y * game.height / game.spanY,
-        w: game.width / game.spanX,
-        h: game.height / game.spanY
-      }
-    }
-    return this
-  }
-}*/
 
 g.Player = {
-  init: function (x, y, playerType, theta) {
-    var tile = g.PlayerTile.init(x, y, playerType, theta)
+  init: function (complex, playerType, orientation) {
+
+    var tile = g.PlayerTile.init(complex.x, complex.y, playerType, orientation.getTheta())
     return {
-      t: tile
+      t: tile,
+      o: orientation
+    }
+  },
+  handleAction(player, action) {
+    var subtype = action.subtype
+    if (subtype === 'forward') {
+
     }
   }
+
 }
 g.PlayerTile = {
   init: function (x, y, playerType, theta) {
@@ -145,7 +198,7 @@ g.Tile = {
 g.Tiles = {}
 g.Tiles = {
   floor: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAYAAAAGCAYAAADgzO9IAAAABmJLR0QA/wD/AP+gvaeTAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH4AgSERAr62pHoQAAABl0RVh0Q29tbWVudABDcmVhdGVkIHdpdGggR0lNUFeBDhcAAAAWSURBVAjXY5wRzv2fAQtgYsAB6CEBACasAgXtJRiTAAAAAElFTkSuQmCC',
-  player: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAYAAAAGCAYAAADgzO9IAAAABmJLR0QA/wD/AP+gvaeTAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH4AgVCCEdbK11zAAAABl0RVh0Q29tbWVudABDcmVhdGVkIHdpdGggR0lNUFeBDhcAAAA7SURBVAjXVc0xEsAwDALBtSb/f3IuhZ3CNAIhxKqAtTapBXMtrwOq9txS9PzRH2VoBpeBF83+drpOC3zWRRv/dpHcTgAAAABJRU5ErkJggg==',
+  player: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAYAAAAGCAYAAADgzO9IAAAABmJLR0QA/wD/AP+gvaeTAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH4AgbCQcdTm7r7AAAABl0RVh0Q29tbWVudABDcmVhdGVkIHdpdGggR0lNUFeBDhcAAAA5SURBVAjXdc1BCkJBAMPQ17n/mY2L8SMIFroJJV0FQ7bU4HwaqNnusgf+5PiTdZ3hbF65P18/PRDe6EIb/8frDKQAAAAASUVORK5CYII=',
   hole: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAYAAAAGCAYAAADgzO9IAAAABmJLR0QA/wD/AP+gvaeTAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH4AgVCicOvc1H+gAAABl0RVh0Q29tbWVudABDcmVhdGVkIHdpdGggR0lNUFeBDhcAAAAcSURBVAjXY2RgYPjPgAUwMeAA5Ev8RZdgxGU5ANPcAwYrkLWxAAAAAElFTkSuQmCC'
 }
 "use strict";
@@ -277,7 +330,9 @@ g.store = {
     g.store.state = {
       game: g.Game.init(),
       tiles: [],
-      players: []
+      players: [],
+      remainingActions:[],
+      postActions:[]
     }
   },
   prepareGame : function () {
@@ -302,6 +357,25 @@ g.store = {
     var newPlayers = newState.players
     for (i=0; i<Math.max(oldPlayers.length, newPlayers.length); i++) {
       g.PlayerTile.render(game, (oldPlayers[i] || {}).t, (newPlayers[i] || {}).t, time)
+    }
+  },
+  display: function () {
+    var state = g.store.state, newState = clone(state), game = state.game. remainingActions = newState.remainingActions, postActions = newState.postActions, nextActions
+    // we need to do post Actions
+    if (postActions.length) {
+      // TODO laser, holes, lives...
+    }
+    if (!remainingActions.length) {
+      return
+    }
+    nextActions = remainingActions.pop()
+    for (let nextAction of nextActions) {
+      g.store.handleAction(newState, nextAction)
+    }
+  },
+  handleAction: function (state, action) {
+    if (action.type === 'player') {
+      state.players[action.player] = g.Player.handleAction(state.players[action.player], action)
     }
   }
 }

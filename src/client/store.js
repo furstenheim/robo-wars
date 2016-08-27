@@ -3,7 +3,9 @@ g.store = {
     g.store.state = {
       game: g.Game.init(),
       tiles: [],
-      players: []
+      players: [],
+      remainingActions:[],
+      postActions:[]
     }
   },
   prepareGame : function () {
@@ -28,6 +30,25 @@ g.store = {
     var newPlayers = newState.players
     for (i=0; i<Math.max(oldPlayers.length, newPlayers.length); i++) {
       g.PlayerTile.render(game, (oldPlayers[i] || {}).t, (newPlayers[i] || {}).t, time)
+    }
+  },
+  display: function () {
+    var state = g.store.state, newState = clone(state), game = state.game. remainingActions = newState.remainingActions, postActions = newState.postActions, nextActions
+    // we need to do post Actions
+    if (postActions.length) {
+      // TODO laser, holes, lives...
+    }
+    if (!remainingActions.length) {
+      return
+    }
+    nextActions = remainingActions.pop()
+    for (let nextAction of nextActions) {
+      g.store.handleAction(newState, nextAction)
+    }
+  },
+  handleAction: function (state, action) {
+    if (action.type === 'player') {
+      state.players[action.player] = g.Player.handleAction(state.players[action.player], action)
     }
   }
 }

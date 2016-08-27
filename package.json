@@ -22,8 +22,11 @@
     "socket.io": "^1.4.6"
   },
   "devDependencies": {
+    "babel-preset-babili": "0.0.1",
+    "babel-types": "^6.14.0",
     "browser-sync": "^2.14.0",
     "gulp": "^3.9.1",
+    "gulp-babel": "^6.1.2",
     "gulp-clone": "^1.0.0",
     "gulp-concat": "^2.6.0",
     "gulp-file": "^0.3.0",
