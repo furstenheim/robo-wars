@@ -12,7 +12,7 @@ function Complex (x, y) {
 }
 
 // No method overloadin :(
-Complex.sum = function(c1, c2) {
+Complex.add = function(c1, c2) {
   return  new Complex(c1.x + c2.x, c1.y + c2.y)
 }
 
@@ -21,14 +21,14 @@ Complex.multiply = function (c1, c2) {
 }
 
 //This only works 1, -1, i -i we should not need more than that
-Complex.prototype.getTheta = function () {
-  if (this.x === 0) {
-    if (this.y === 1) {
+Complex.getTheta = function (complex) {
+  if (complex.x === 0) {
+    if (complex.y === 1) {
       return 1 * P
     }
     return 3 * P
   }
-  if (this.x === 1) {
+  if (complex.x === 1) {
     return 0
   }
   return 2 * P
@@ -69,6 +69,9 @@ g.Actions = {
     return {
       players :[]
     }
+  },
+  types: {
+    player: 'player'
   }
 }
 g.Game = {
@@ -108,16 +111,27 @@ g.Game = {
 g.Player = {
   init: function (complex, playerType, orientation) {
 
-    var tile = g.PlayerTile.init(complex.x, complex.y, playerType, orientation.getTheta())
+    var tile = g.PlayerTile.init(complex.x, complex.y, playerType, Complex.getTheta(orientation))
     return {
       t: tile,
-      o: orientation
+      o: orientation,
+      c: complex,
+      type: playerType
     }
   },
   handleAction(player, action) {
     var subtype = action.subtype
     if (subtype === 'forward') {
-
+      return g.Player.init(Complex.add(player.c, player.o), player.type, player.o)
+    }
+    if (subtype === 'rotateLeft') {
+      return g.Player.init(player.c, player.type, Complex.multiply(player.o, {x:0, y: 1}))
+    }
+    if (subtype === 'rotateRight') {
+      return g.Player.init(player.c, player.type, Complex.multiply(player.o, {x:0, y: -1}))
+    }
+    if (subtype === 'backwards') {
+      return g.Player.init(Complex.add(player.c, Complex.multiply({x:-1, y:0}, player.o)), player.type, player.o)
     }
   }
 
@@ -360,7 +374,7 @@ g.store = {
     }
   },
   display: function () {
-    var state = g.store.state, newState = clone(state), game = state.game. remainingActions = newState.remainingActions, postActions = newState.postActions, nextActions
+    var state = g.store.state, newState = clone(state), game = state.game, remainingActions = newState.remainingActions, postActions = newState.postActions, nextActions
     // we need to do post Actions
     if (postActions.length) {
       // TODO laser, holes, lives...
@@ -372,9 +386,12 @@ g.store = {
     for (let nextAction of nextActions) {
       g.store.handleAction(newState, nextAction)
     }
+    g.store.oldState = state
+    g.store.state = newState
+    g.store.render(state, newState, 1)
   },
   handleAction: function (state, action) {
-    if (action.type === 'player') {
+    if (action.type === g.Actions.types.player) {
       state.players[action.player] = g.Player.handleAction(state.players[action.player], action)
     }
   }
@@ -384,8 +401,18 @@ g.canvas = document.getElementById('c')
 g.c = g.canvas.getContext('2d')
 g.store.init()
 g.store.prepareGame()
-
-})()}
+g.store.state.remainingActions = [[
+  {type:g.Actions.types.player, player: 0, subtype: 'forward'},
+  {type:g.Actions.types.player, player: 1, subtype: 'rotateRight'},
+  {type:g.Actions.types.player, player: 2, subtype: 'rotateLeft'},
+  {type:g.Actions.types.player, player: 3, subtype: 'forward'}]]
+g.store.display()
+g.store.state.remainingActions = [[
+  {type:g.Actions.types.player, player: 0, subtype: 'forward'},
+  {type:g.Actions.types.player, player: 1, subtype: 'backwards'},
+  {type:g.Actions.types.player, player: 2, subtype: 'rotateLeft'},
+  {type:g.Actions.types.player, player: 3, subtype: 'forward'}]]
+g.store.display()})()}
 if (typeof window === 'undefined') {(function (){"use strict";
 
 /**
