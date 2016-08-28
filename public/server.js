@@ -198,8 +198,12 @@ g.Tile = {
     if (!newTile){
       return
     }
+    if (oldTile) {
+      // Already drawn
+      return
+    }
     var realCoordinates = g.Game.getRealCoordinates(game, newTile.x, newTile.y)
-    var c = g.c
+    var c = g.bgc
     var floor = new Image()
     floor.src = g.Tiles[newTile.type]
     c.drawImage(floor, realCoordinates.x, realCoordinates.y, realCoordinates.w, realCoordinates.h)
@@ -346,9 +350,9 @@ g.store = {
       postActions:[]
     }
   },
-  movement: 500,
+  movement: 100,
   // tick depends movement so we need this wizardy
-  get tick() { return this.movement / 24 },
+  get tick() { return this.movement / 60 },
   prepareGame : function () {
     var state = g.store.state, newState = clone(state), game = state.game
     var result = g.Game.prepareGame(game)
@@ -359,6 +363,7 @@ g.store = {
     g.store.render(state, newState)
   },
   render: function (oldState, newState, time) {
+    g.c.clearRect(0,0, newState.game.w, newState.game.h)
     var oldTiles = oldState.tiles
     var newTiles = newState.tiles
     var game = newState.game
@@ -380,12 +385,14 @@ g.store = {
     if (animating) {
       time+= g.store.tick
       // Leave one tick to make sure we draw the end of it
-      if (time > g.store.movement + g.store.tick + 1) {
+      if (time > g.store.movement) {
         g.store.time = 0
         g.store.animating = false
+        // Render one just time to make sure we render correctly
+        g.store.render(oldState, state, g.store.movement)
       } else {
         g.store.time = time
-        return g.store.render(oldState, state, time)
+        return window.requestAnimationFrame(function() {g.store.render(oldState, state, time)})
       }
     }
 
@@ -414,19 +421,21 @@ g.store = {
 /* init variables here */
 g.canvas = document.getElementById('c')
 g.c = g.canvas.getContext('2d')
+g.bgcanvas = document.getElementById('bgc')
+g.bgc = g.bgcanvas.getContext('2d')
 g.store.init()
 g.store.prepareGame()
 var interval = setInterval(g.store.display, g.store.tick)
 g.store.state.remainingActions = [[
-/*  {type:g.Actions.types.player, player: 0, subtype: 'forward'},
-  {type:g.Actions.types.player, player: 1, subtype: 'rotateRight'},*/
-  {type:g.Actions.types.player, player: 2, subtype: 'rotateLeft'}/*,
-  {type:g.Actions.types.player, player: 3, subtype: 'forward'}*/],
-  [/*
+  {type:g.Actions.types.player, player: 0, subtype: 'forward'},
+  {type:g.Actions.types.player, player: 1, subtype: 'rotateRight'},
+  {type:g.Actions.types.player, player: 2, subtype: 'rotateLeft'},
+  {type:g.Actions.types.player, player: 3, subtype: 'forward'}],
+  [
     {type:g.Actions.types.player, player: 0, subtype: 'forward'},
-    {type:g.Actions.types.player, player: 1, subtype: 'backwards'},*/
-    {type:g.Actions.types.player, player: 2, subtype: 'rotateLeft'}/*,
-    {type:g.Actions.types.player, player: 3, subtype: 'forward'}*/]]
+    {type:g.Actions.types.player, player: 1, subtype: 'backwards'},
+    {type:g.Actions.types.player, player: 2, subtype: 'rotateLeft'},
+    {type:g.Actions.types.player, player: 3, subtype: 'forward'}]]
 /*
 g.store.display()
 */
