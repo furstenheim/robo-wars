@@ -8,7 +8,7 @@ g.store = {
       postActions:[]
     }
   },
-  movement: 100,
+  movement: 1000,
   // tick depends movement so we need this wizardy
   get tick() { return this.movement / 60 },
   prepareGame : function () {
@@ -36,22 +36,18 @@ g.store = {
       g.PlayerTile.render(game, (oldPlayers[i] || {}).t, (newPlayers[i] || {}).t, time)
     }
   },
-  display: function () {
+  displayMovement: function () {
     var oldState = g.store.oldState, state = g.store.state, newState = clone(state), game = state.game, animating = g.store.animating,
-      time = g.store.time, remainingActions = newState.remainingActions, postActions = newState.postActions, nextActions
+      elapsedTime = new Date() - g.store.time, remainingActions = newState.remainingActions, postActions = newState.postActions, nextActions
     // we need to do post Actions
     if (animating) {
-      time+= g.store.tick
       // Leave one tick to make sure we draw the end of it
-      if (time > g.store.movement) {
-        g.store.time = 0
+      if (elapsedTime > g.store.movement) {
         g.store.animating = false
-        // Render one just time to make sure we render correctly
-        g.store.render(oldState, state, g.store.movement)
-      } else {
-        g.store.time = time
-        return window.requestAnimationFrame(function() {g.store.render(oldState, state, time)})
       }
+      window.requestAnimationFrame(g.store.displayMovement)
+      // Render one just time to make sure we render correctly
+      return g.store.render(oldState, state, elapsedTime)
     }
 
     if (postActions.length) {
@@ -60,6 +56,7 @@ g.store = {
     if (!remainingActions.length) {
       return
     }
+    // Prepare the actions
     nextActions = remainingActions.shift()
     for (let nextAction of nextActions) {
       g.store.handleAction(newState, nextAction)
@@ -67,8 +64,9 @@ g.store = {
     g.store.oldState = state
     g.store.state = newState
     g.store.animating = true
-    g.store.time = 0
-    g.store.render(state, newState, g.store.time)
+    g.store.time = new Date()
+    window.requestAnimationFrame(g.store.displayMovement)
+    //g.store.render(state, newState, g.store.time)
   },
   handleAction: function (state, action) {
     if (action.type === g.Actions.types.player) {

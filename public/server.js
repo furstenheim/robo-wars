@@ -350,7 +350,7 @@ g.store = {
       postActions:[]
     }
   },
-  movement: 100,
+  movement: 1000,
   // tick depends movement so we need this wizardy
   get tick() { return this.movement / 60 },
   prepareGame : function () {
@@ -378,22 +378,18 @@ g.store = {
       g.PlayerTile.render(game, (oldPlayers[i] || {}).t, (newPlayers[i] || {}).t, time)
     }
   },
-  display: function () {
+  displayMovement: function () {
     var oldState = g.store.oldState, state = g.store.state, newState = clone(state), game = state.game, animating = g.store.animating,
-      time = g.store.time, remainingActions = newState.remainingActions, postActions = newState.postActions, nextActions
+      elapsedTime = new Date() - g.store.time, remainingActions = newState.remainingActions, postActions = newState.postActions, nextActions
     // we need to do post Actions
     if (animating) {
-      time+= g.store.tick
       // Leave one tick to make sure we draw the end of it
-      if (time > g.store.movement) {
-        g.store.time = 0
+      if (elapsedTime > g.store.movement) {
         g.store.animating = false
-        // Render one just time to make sure we render correctly
-        g.store.render(oldState, state, g.store.movement)
-      } else {
-        g.store.time = time
-        return window.requestAnimationFrame(function() {g.store.render(oldState, state, time)})
       }
+      window.requestAnimationFrame(g.store.displayMovement)
+      // Render one just time to make sure we render correctly
+      return g.store.render(oldState, state, elapsedTime)
     }
 
     if (postActions.length) {
@@ -402,6 +398,7 @@ g.store = {
     if (!remainingActions.length) {
       return
     }
+    // Prepare the actions
     nextActions = remainingActions.shift()
     for (let nextAction of nextActions) {
       g.store.handleAction(newState, nextAction)
@@ -409,8 +406,9 @@ g.store = {
     g.store.oldState = state
     g.store.state = newState
     g.store.animating = true
-    g.store.time = 0
-    g.store.render(state, newState, g.store.time)
+    g.store.time = new Date()
+    window.requestAnimationFrame(g.store.displayMovement)
+    //g.store.render(state, newState, g.store.time)
   },
   handleAction: function (state, action) {
     if (action.type === g.Actions.types.player) {
@@ -425,7 +423,7 @@ g.bgcanvas = document.getElementById('bgc')
 g.bgc = g.bgcanvas.getContext('2d')
 g.store.init()
 g.store.prepareGame()
-var interval = setInterval(g.store.display, g.store.tick)
+//var interval = setInterval(g.store.display, g.store.tick)
 g.store.state.remainingActions = [[
   {type:g.Actions.types.player, player: 0, subtype: 'forward'},
   {type:g.Actions.types.player, player: 1, subtype: 'rotateRight'},
@@ -436,13 +434,12 @@ g.store.state.remainingActions = [[
     {type:g.Actions.types.player, player: 1, subtype: 'backwards'},
     {type:g.Actions.types.player, player: 2, subtype: 'rotateLeft'},
     {type:g.Actions.types.player, player: 3, subtype: 'forward'}]]
-/*
-g.store.display()
-*/
+g.store.displayMovement()
 //g.store.state.remainingActions.concat([])
 /*
 g.store.display()*/
-setTimeout(function (){clearInterval(interval)},10000)})()}
+//setTimeout(function (){clearInterval(interval)},10000)
+})()}
 if (typeof window === 'undefined') {(function (){"use strict";
 
 /**
