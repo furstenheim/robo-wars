@@ -19,7 +19,7 @@ gulp.task('build', function () {
   var client = merge(gulp.src(['src/client/*.*','!src/client/init.js']), gulp.src(['src/client/init.js']))
     .pipe(concat('client.js'))
     .pipe(insert.wrap('if (typeof window !== \'undefined\') {(function (){', '})()}'))
-  var shared = gulp.src('src/shared/*.*')
+  var shared = gulp.src(['src/shared/shared.js', 'src/shared/*.*'])
     .pipe(concat('shared.js'))
   var server = gulp.src('src/server/*.*')
     .pipe(concat('server.js'))

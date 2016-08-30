@@ -1,5 +1,3 @@
-"use strict";
-
 /**
  * User sessions
  * @param {array} users
@@ -55,29 +53,6 @@ Game.prototype.ended = function () {
 	return this.user1.guess !== GUESS_NO && this.user2.guess !== GUESS_NO;
 }
 
-/**
- * Final score
- */
-Game.prototype.score = function () {
-	if (
-		this.user1.guess === GUESS_ROCK && this.user2.guess === GUESS_SCISSORS ||
-		this.user1.guess === GUESS_PAPER && this.user2.guess === GUESS_ROCK ||
-		this.user1.guess === GUESS_SCISSORS && this.user2.guess === GUESS_PAPER
-	) {
-		this.user1.win();
-		this.user2.lose();
-	} else if (
-		this.user2.guess === GUESS_ROCK && this.user1.guess === GUESS_SCISSORS ||
-		this.user2.guess === GUESS_PAPER && this.user1.guess === GUESS_ROCK ||
-		this.user2.guess === GUESS_SCISSORS && this.user1.guess === GUESS_PAPER
-	) {
-		this.user2.win();
-		this.user1.lose();
-	} else {
-		this.user1.draw();
-		this.user2.draw();
-	}
-}
 
 /**
  * User session class
@@ -87,7 +62,6 @@ function User(socket) {
 	this.socket = socket;
 	this.game = null;
 	this.opponent = null;
-	this.guess = GUESS_NO;
 }
 
 /**
@@ -156,24 +130,24 @@ User.prototype.draw = function () {
 module.exports = function (socket) {
 	var user = new User(socket);
 	users.push(user);
-	findOpponent(user);
+	//findOpponent(user);
 
 	socket.on("disconnect", function () {
 		console.log("Disconnected: " + socket.id);
 		removeUser(user);
-		if (user.opponent) {
+		/*if (user.opponent) {
 			user.opponent.end();
 			findOpponent(user.opponent);
-		}
+		}*/
 	});
 
-	socket.on("guess", function (guess) {
+/*	socket.on("guess", function (guess) {
 		console.log("Guess: " + socket.id);
 		if (user.setGuess(guess) && user.game.ended()) {
 			user.game.score();
 			user.game.start();
 		}
-	});
+	});*/
 
 	console.log("Connected: " + socket.id);
 };

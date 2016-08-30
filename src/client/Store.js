@@ -72,5 +72,14 @@ g.store = {
     if (action.type === g.Actions.types.player) {
       state.players[action.player] = g.Player.handleAction(state.players[action.player], action)
     }
+  },
+  handleKeyDown: function (e) {
+    var code = e.key || e.code
+    if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].indexOf(code) !== -1) {
+      g.store.state.remainingActions.push([{type: g.Actions.types.player, player: 0, subtype: code}])
+    }
+    if (g.store.state.remainingActions.length === 1) {
+      g.store.displayMovement()
+    }
   }
 }
