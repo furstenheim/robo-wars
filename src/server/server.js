@@ -5,16 +5,29 @@
 var users = [];
 
 /**
- * Find opponent for a user
+ * Find opponents for a user
  * @param {User} user
  */
 function findOpponent(user) {
-	for (var i = 0; i < users.length; i++) {
+	console.log('Finding oponent', user)
+	for(let loggedUser of users) {
+		console.log(g.Game.np)
+		// This actually does not work for g.Game.np === 1. But who wants to play alone?
 		if (
-			user !== users[i] && 
-			users[i].opponent === null
+			user !== loggedUser &&
+			// loggedUser counts for the total number
+			loggedUser.opponents.length < g.Game.np - 1
 		) {
-			new Game(user, users[i]).start();
+			for(let opponent of loggedUser.opponents) {
+				user.opponents.push(opponent)
+				opponent.opponents.push(user)
+			}
+			loggedUser.opponents.push(user)
+			user.opponents.push(loggedUser)
+			if (loggedUser.opponents.length === g.Game.np -1) {
+				new Game([loggedUser].concat(loggedUser.opponents)).start()
+			}
+			return
 		}
 	}
 }
@@ -27,22 +40,16 @@ function removeUser(user) {
 	users.splice(users.indexOf(user), 1);
 }
 
-/**
- * Game class
- * @param {User} user1
- * @param {User} user2
- */
-function Game(user1, user2) {
-	this.user1 = user1;
-	this.user2 = user2;
+function Game(users) {
+	this.users = users
 }
-
 /**
  * Start new game
  */
 Game.prototype.start = function () {
-	this.user1.start(this, this.user2);
-	this.user2.start(this, this.user1);
+	for (let i = 0; i<users.length; i++) {
+		users[i].start(this, i)
+	}
 }
 
 /**
@@ -59,9 +66,9 @@ Game.prototype.ended = function () {
  * @param {Socket} socket
  */
 function User(socket) {
-	this.socket = socket;
-	this.game = null;
-	this.opponent = null;
+	this.socket = socket
+	this.game = null
+	this.opponents = []
 }
 
 /**
@@ -85,11 +92,10 @@ User.prototype.setGuess = function (guess) {
  * @param {Game} game
  * @param {User} opponent
  */
-User.prototype.start = function (game, opponent) {
-	this.game = game;
-	this.opponent = opponent;
-	this.guess = GUESS_NO;
-	this.socket.emit("start");		
+User.prototype.start = function (game, position) {
+	this.game = game
+	this.position = position
+	this.socket.emit("start")
 };
 
 /**
@@ -128,9 +134,9 @@ User.prototype.draw = function () {
  * @param {Socket} socket
  */
 module.exports = function (socket) {
-	var user = new User(socket);
+	var user = new User(socket)
 	users.push(user);
-	//findOpponent(user);
+	findOpponent(user);
 
 	socket.on("disconnect", function () {
 		console.log("Disconnected: " + socket.id);

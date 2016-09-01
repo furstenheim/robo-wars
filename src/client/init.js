@@ -36,7 +36,7 @@ document.addEventListener('keydown', g.store.handleKeyDown, false)
 
 
 
-g.store.init()
+/*g.store.init()
 g.store.prepareGame()
 //var interval = setInterval(g.store.display, g.store.tick)
 g.store.state.remainingActions = [[
@@ -49,5 +49,5 @@ g.store.state.remainingActions = [[
     {type:g.Actions.types.player, player: 1, subtype: 'ArrowUp'},
     {type:g.Actions.types.player, player: 2, subtype: 'ArrowLeft'},
     {type:g.Actions.types.player, player: 3, subtype: 'ArrowUp'}]]
-g.store.displayMovement()
+g.store.displayMovement()*/
 
