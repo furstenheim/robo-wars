@@ -71,7 +71,7 @@ g.Game = {
         tiles.push(g.Tile.init(i, j, type));
       }
     }
-    return { players: players, tiles: tiles };
+    return { game: game, players: players, tiles: tiles };
   }
 };
 g.Player = {
@@ -374,20 +374,23 @@ g.bgc = g.bgcanvas.getContext('2d');
  */
 function bind() {
 
+  socket.on('start', function (state, position) {
+    console.log('src/client/init.js:12:16:state,position', state, position);
+  });
   socket.on("end", function () {
-    console.log('src/client/init.js:12:16:"Waiting for opponent..."', "Waiting for opponent...");
+    console.log('src/client/init.js:15:16:"Waiting for opponent..."', "Waiting for opponent...");
   });
 
   socket.on("connect", function () {
-    console.log('src/client/init.js:16:16:"Waiting for opponent..."', "Waiting for opponent...");
+    console.log('src/client/init.js:19:16:"Waiting for opponent..."', "Waiting for opponent...");
   });
 
   socket.on("disconnect", function () {
-    console.error('src/client/init.js:20:18:"Connection lost!"', "Connection lost!");
+    console.error('src/client/init.js:23:18:"Connection lost!"', "Connection lost!");
   });
 
   socket.on("error", function () {
-    console.error('src/client/init.js:24:18:"Connection error!"', "Connection error!");
+    console.error('src/client/init.js:27:18:"Connection error!"', "Connection error!");
   });
 }
 function init() {
@@ -423,9 +426,7 @@ var users = [];
  * @param {User} user
  */
 function findOpponent(user) {
-	console.log("src/server/server.js:12:13:'Finding oponent',user", 'Finding oponent', user);
 	for (let loggedUser of users) {
-		console.log("src/server/server.js:14:14:g.Game.np", g.Game.np);
 		// This actually does not work for g.Game.np === 1. But who wants to play alone?
 		if (user !== loggedUser &&
 		// loggedUser counts for the total number
@@ -459,6 +460,10 @@ function Game(users) {
  * Start new game
  */
 Game.prototype.start = function () {
+	var game = g.Game.init();
+	// TODO get type of player from users
+	this.state = g.Game.prepareGame(game);
+
 	for (let i = 0; i < users.length; i++) {
 		users[i].start(this, i);
 	}
@@ -502,7 +507,8 @@ User.prototype.setGuess = function (guess) {
 User.prototype.start = function (game, position) {
 	this.game = game;
 	this.position = position;
-	this.socket.emit("start");
+	console.log("src/server/server.js:100:13:'starting',game.state", 'starting', game.state);
+	this.socket.emit("start", JSON.stringify(game.state));
 };
 
 /**
@@ -546,7 +552,7 @@ module.exports = function (socket) {
 	findOpponent(user);
 
 	socket.on("disconnect", function () {
-		console.log("src/server/server.js:142:14:\"Disconnected: \" + socket.id", "Disconnected: " + socket.id);
+		console.log("src/server/server.js:145:14:\"Disconnected: \" + socket.id", "Disconnected: " + socket.id);
 		removeUser(user);
 		/*if (user.opponent) {
   	user.opponent.end();
@@ -562,5 +568,5 @@ module.exports = function (socket) {
  		}
  	});*/
 
-	console.log("src/server/server.js:158:13:\"Connected: \" + socket.id", "Connected: " + socket.id);
+	console.log("src/server/server.js:161:13:\"Connected: \" + socket.id", "Connected: " + socket.id);
 };})()}})()

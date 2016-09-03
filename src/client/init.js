@@ -8,6 +8,9 @@ g.bgc = g.bgcanvas.getContext('2d')
  */
 function bind() {
 
+  socket.on('start', function (state, position) {
+    console.log(state, position)
+  })
   socket.on("end", function () {
     console.log("Waiting for opponent...");
   });

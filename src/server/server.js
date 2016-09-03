@@ -9,9 +9,7 @@ var users = [];
  * @param {User} user
  */
 function findOpponent(user) {
-	console.log('Finding oponent', user)
 	for(let loggedUser of users) {
-		console.log(g.Game.np)
 		// This actually does not work for g.Game.np === 1. But who wants to play alone?
 		if (
 			user !== loggedUser &&
@@ -47,6 +45,10 @@ function Game(users) {
  * Start new game
  */
 Game.prototype.start = function () {
+	var game = g.Game.init()
+	// TODO get type of player from users
+	this.state = g.Game.prepareGame(game)
+
 	for (let i = 0; i<users.length; i++) {
 		users[i].start(this, i)
 	}
@@ -95,8 +97,9 @@ User.prototype.setGuess = function (guess) {
 User.prototype.start = function (game, position) {
 	this.game = game
 	this.position = position
-	this.socket.emit("start")
-};
+	console.log('starting', game.state)
+	this.socket.emit("start", JSON.stringify(game.state))
+}
 
 /**
  * Terminate game
