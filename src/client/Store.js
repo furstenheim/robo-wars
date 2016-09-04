@@ -10,7 +10,7 @@ g.store = {
   },
   movement: 1000,
   inputActions: 4,
-  inputTime: 30000,
+  inputTime: 2000,
   listenInput: false,
   // tick depends movement so we need this wizardy
   get tick() { return this.movement / 60 },
@@ -30,6 +30,7 @@ g.store = {
     var remainingTime = (g.store.inputTime - (new Date() - new Date(g.store.input.time))) / g.store.inputTime
     if (remainingTime < 0) {
       document.removeEventListener('keydown', g.store.handleKeyDown)
+      g.Input.render(g.store.input, -1)
       g.store.input = false
       // TODO tell the server we are ready to go
       return

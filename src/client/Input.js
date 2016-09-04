@@ -12,6 +12,8 @@ g.Input = {
   max: 4,
   render: function (input, fraction) {
     var h = g.Input.size.h, w = g.Input.size.w, c = g.ic, d =~~ (h / 30), imgLoaded = 0, cx= h * g.Input.max + h/2, cy = h/2
+    // For some reason circle does not disappear without c.beginPath?¿
+    c.beginPath()
     c.clearRect(0,0, w, h)
     for (let i = 0; i < g.Input.max; i++) {
       c.strokeStyle = 'black'
@@ -28,15 +30,17 @@ g.Input = {
       }
     }
     fraction = Math.max(Math.min(fraction, 1), 0)
-    c.save()
-    c.fillStyle = 'red'
-    c.beginPath()
-    c.moveTo(cx, cy)
-    c.arc(cx, cy, cy - 2 * d, 0,  fraction * 4 * P)
-    c.lineTo(cx, cy)
-    c.closePath()
-    c.fill()
-    c.restore()
+    console.log(fraction)
+
+    if (fraction > 0) {
+      c.beginPath()
+      c.fillStyle = 'red'
+      c.moveTo(cx, cy)
+      c.arc(cx, cy, cy - 2 * d, 0,  fraction * 4 * P)
+      c.lineTo(cx, cy)
+      c.closePath()
+      c.fill()
+    }
     c.stroke()
   },
   clear: function () {

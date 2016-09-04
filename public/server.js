@@ -207,6 +207,8 @@ g.Input = {
         imgLoaded = 0,
         cx = h * g.Input.max + h / 2,
         cy = h / 2;
+    // For some reason circle does not disappear without c.beginPath?¿
+    c.beginPath();
     c.clearRect(0, 0, w, h);
     for (let i = 0; i < g.Input.max; i++) {
       c.strokeStyle = 'black';
@@ -223,15 +225,17 @@ g.Input = {
       }
     }
     fraction = Math.max(Math.min(fraction, 1), 0);
-    c.save();
-    c.fillStyle = 'red';
-    c.beginPath();
-    c.moveTo(cx, cy);
-    c.arc(cx, cy, cy - 2 * d, 0, fraction * 4 * P);
-    c.lineTo(cx, cy);
-    c.closePath();
-    c.fill();
-    c.restore();
+    console.log('src/client/Input.js:33:16:fraction', fraction);
+
+    if (fraction > 0) {
+      c.beginPath();
+      c.fillStyle = 'red';
+      c.moveTo(cx, cy);
+      c.arc(cx, cy, cy - 2 * d, 0, fraction * 4 * P);
+      c.lineTo(cx, cy);
+      c.closePath();
+      c.fill();
+    }
     c.stroke();
   },
   clear: function () {
@@ -335,7 +339,7 @@ g.store = {
   },
   movement: 1000,
   inputActions: 4,
-  inputTime: 30000,
+  inputTime: 2000,
   listenInput: false,
   // tick depends movement so we need this wizardy
   get tick() {
@@ -357,6 +361,7 @@ g.store = {
     var remainingTime = (g.store.inputTime - (new Date() - new Date(g.store.input.time))) / g.store.inputTime;
     if (remainingTime < 0) {
       document.removeEventListener('keydown', g.store.handleKeyDown);
+      g.Input.render(g.store.input, -1);
       g.store.input = false;
       // TODO tell the server we are ready to go
       return;
