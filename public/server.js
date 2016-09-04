@@ -190,7 +190,7 @@ g.Input = {
   init: function () {
     return {
       time: new Date(),
-      actions: [{ type: g.Actions.types.player, player: 0, subtype: 'ArrowUp' }, { type: g.Actions.types.player, player: 0, subtype: 'ArrowRight' }, { type: g.Actions.types.player, player: 0, subtype: 'ArrowLeft' }, { type: g.Actions.types.player, player: 0, subtype: 'ArrowUp' }]
+      actions: []
     };
   },
   size: {
@@ -219,9 +219,6 @@ g.Input = {
       }
     }
     c.stroke();
-    function loaded() {
-      if (++imgLoaded === g.Input.max) c.stroke();
-    }
   },
   clear: function () {
     var h = g.Input.size.h,
@@ -310,7 +307,7 @@ g.store = {
   },
   movement: 1000,
   inputActions: 4,
-  inputTime: 2000,
+  inputTime: 30000,
   listenInput: false,
   // tick depends movement so we need this wizardy
   get tick() {
@@ -323,19 +320,21 @@ g.store = {
     g.store.render(oldState, state);
   },
   acceptInput() {
-    if (!g.store.listenInput) {
-      g.store.listenInput = g.input.init();
+    if (!g.store.input) {
+      g.store.input = g.Input.init();
       document.addEventListener('keydown', g.store.handleKeyDown, false);
       return window.requestAnimationFrame(g.store.acceptInput);
     }
     // TODO only send necessary actions
-    var remainingTime = g.store.inputTime - new Date() + g.store.listenInput.time;
+    var remainingTime = (g.store.inputTime - new Date() + g.store.input.time) / g.store.inputTime;
     if (remainingTime < 0) {
       document.removeEventListener('keydown', g.store.handleKeyDown);
-      g.store.listenInput = false;
+      g.store.input = false;
       // TODO tell the server we are ready to go
       return;
     }
+    g.Input.render(g.store.input, remainingTime);
+    window.requestAnimationFrame(g.store.acceptInput);
   },
   prepareGame() {
     var state = g.store.state,
@@ -409,12 +408,12 @@ g.store = {
     }
   },
   handleKeyDown(e) {
-    var code = e.key || e.code;
+    var code = e.key || e.code,
+        input = g.store.input,
+        newInput = clone(input);
     if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].indexOf(code) !== -1) {
-      g.store.state.remainingActions.push([{ type: g.Actions.types.player, player: 0, subtype: code }]);
-    }
-    if (g.store.state.remainingActions.length === 1) {
-      g.store.displayMovement();
+      newInput.actions.push({ type: g.Actions.types.player, player: 0, subtype: code });
+      g.store.input = newInput;
     }
   }
 };
@@ -486,10 +485,8 @@ function init() {
 window.addEventListener("load", init, false);
 
 g.store.state = g.store.init();
-setTimeout(function () {
-  g.Input.render(g.Input.init());
-}, 10);
-
+//setTimeout(function () {g.Input.render(g.Input.init())}, 10)
+g.store.acceptInput();
 /*g.store.init()
 g.store.prepareGame()
 //var interval = setInterval(g.store.display, g.store.tick)

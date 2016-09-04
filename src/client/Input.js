@@ -2,11 +2,7 @@ g.Input = {
   init: function () {
     return {
       time: new Date(),
-      actions:[
-        {type:g.Actions.types.player, player: 0, subtype: 'ArrowUp'},
-        {type:g.Actions.types.player, player: 0, subtype: 'ArrowRight'},
-        {type:g.Actions.types.player, player: 0, subtype: 'ArrowLeft'},
-        {type:g.Actions.types.player, player: 0, subtype: 'ArrowUp'}]
+      actions:[]
     }
   },
   size:{
@@ -31,9 +27,6 @@ g.Input = {
       }
     }
     c.stroke()
-    function loaded () {
-      if (++imgLoaded === g.Input.max) c.stroke()
-    }
   },
   clear: function () {
     var h = g.Input.size.h, w = g.Input.size.w, c = g.ic

@@ -48,8 +48,8 @@ window.addEventListener("load", init, false);
 
 
 g.store.state = g.store.init()
-setTimeout(function () {g.Input.render(g.Input.init())}, 10)
-
+//setTimeout(function () {g.Input.render(g.Input.init())}, 10)
+g.store.acceptInput()
 /*g.store.init()
 g.store.prepareGame()
 //var interval = setInterval(g.store.display, g.store.tick)
