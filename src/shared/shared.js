@@ -2,6 +2,7 @@
 var socket
 // global variable
 var g = {}
+var movements = ['ArrowRight', 'ArrowUp', 'ArrowLeft', 'ArrowDown']
 function clone (object){return JSON.parse(JSON.stringify(object))}
 // Half PI
 var P = Math.PI / 2

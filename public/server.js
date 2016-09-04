@@ -3,6 +3,7 @@
 var socket;
 // global variable
 var g = {};
+var movements = ['ArrowRight', 'ArrowUp', 'ArrowLeft', 'ArrowDown'];
 function clone(object) {
   return JSON.parse(JSON.stringify(object));
 }
@@ -227,11 +228,25 @@ g.Input = {
     c.clearRect(0, 0, w, h);
   },
   subtypeToTheta(subtype) {
-    var subtypes = ['ArrowRight', 'ArrowUp', 'ArrowLeft', 'ArrowDown'],
+    var subtypes = movements,
         i = subtypes.indexOf(subtype);
     if (i > -1) {
       return P * i;
     }
+  },
+  // health goes from 0 to 1 1 is healthy
+  acceptAction(input, code, health) {
+    var right = Math.random() < health,
+        newInput = clone(input);
+    if (input.actions.length >= g.Input.max) {
+      return input;
+    }
+    if (right) {
+      newInput.actions.push({ type: g.Actions.types.player, subtype: code });
+    } else {
+      newInput.actions.push({ type: g.Actions.types.player, subtype: movements[~~(Math.random() * 4)] });
+    }
+    return newInput;
   }
 };
 g.Player = {
@@ -411,9 +426,9 @@ g.store = {
     var code = e.key || e.code,
         input = g.store.input,
         newInput = clone(input);
-    if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].indexOf(code) !== -1) {
-      newInput.actions.push({ type: g.Actions.types.player, player: 0, subtype: code });
-      g.store.input = newInput;
+    if (movements.indexOf(code) !== -1) {
+      // TOOD pass health
+      g.store.input = g.Input.acceptAction(input, code, 0.8);
     }
   }
 };

@@ -33,9 +33,22 @@ g.Input = {
     c.clearRect(0,0, w, h)
   },
   subtypeToTheta(subtype) {
-    var subtypes = ['ArrowRight', 'ArrowUp', 'ArrowLeft', 'ArrowDown'], i = subtypes.indexOf(subtype)
+    var subtypes = movements, i = subtypes.indexOf(subtype)
     if (i > -1) {
       return P * i
     }
+  },
+  // health goes from 0 to 1 1 is healthy
+  acceptAction(input, code, health) {
+    var right = Math.random() < health, newInput = clone(input)
+    if (input.actions.length >= g.Input.max) {
+      return input
+    }
+    if (right) {
+      newInput.actions.push({type: g.Actions.types.player, subtype: code})
+    } else {
+      newInput.actions.push({type: g.Actions.types.player, subtype: movements[~~ (Math.random() * 4)]})
+    }
+    return newInput
   }
 }

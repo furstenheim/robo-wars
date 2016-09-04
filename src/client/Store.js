@@ -102,9 +102,9 @@ g.store = {
   },
   handleKeyDown (e) {
     var code = e.key || e.code, input = g.store.input, newInput = clone(input)
-    if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].indexOf(code) !== -1) {
-     newInput.actions.push({type: g.Actions.types.player, player: 0, subtype: code})
-      g.store.input = newInput
+    if (movements.indexOf(code) !== -1) {
+      // TOOD pass health
+      g.store.input = g.Input.acceptAction(input, code, 0.8)
     }
   }
 }
