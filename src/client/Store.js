@@ -9,6 +9,9 @@ g.store = {
     }
   },
   movement: 1000,
+  inputActions: 4,
+  inputTime: 2000,
+  listenInput: false,
   // tick depends movement so we need this wizardy
   get tick() { return this.movement / 60 },
   startGame(state) {
@@ -17,7 +20,23 @@ g.store = {
     g.store.state = state
     g.store.render(oldState, state)
   },
-  prepareGame : function () {
+  acceptInput() {
+    if (!g.store.listenInput) {
+      g.store.listenInput = g.input.init()
+      document.addEventListener('keydown', g.store.handleKeyDown, false)
+      return window.requestAnimationFrame(g.store.acceptInput)
+    }
+    // TODO only send necessary actions
+    var remainingTime = g.store.inputTime - new Date() + g.store.listenInput.time
+    if (remainingTime < 0) {
+      document.removeEventListener('keydown', g.store.handleKeyDown)
+      g.store.listenInput = false
+      // TODO tell the server we are ready to go
+      return
+    }
+
+  },
+  prepareGame() {
     var state = g.store.state, newState = clone(state), game = state.game
     var result = g.Game.prepareGame(game)
     newState.tiles = result.tiles
@@ -26,7 +45,7 @@ g.store = {
     g.store.oldState = state
     g.store.render(state, newState)
   },
-  render: function (oldState, newState, time) {
+  render(oldState, newState, time) {
     g.c.clearRect(0,0, newState.game.w, newState.game.h)
     var oldTiles = oldState.tiles
     var newTiles = newState.tiles
@@ -42,7 +61,7 @@ g.store = {
       g.PlayerTile.render(game, (oldPlayers[i] || {}).t, (newPlayers[i] || {}).t, time)
     }
   },
-  displayMovement: function () {
+  displayMovement() {
     var oldState = g.store.oldState, state = g.store.state, newState = clone(state), game = state.game, animating = g.store.animating,
       elapsedTime = new Date() - g.store.time, remainingActions = newState.remainingActions, postActions = newState.postActions, nextActions
     // we need to do post Actions
@@ -74,12 +93,12 @@ g.store = {
     window.requestAnimationFrame(g.store.displayMovement)
     //g.store.render(state, newState, g.store.time)
   },
-  handleAction: function (state, action) {
+  handleAction (state, action) {
     if (action.type === g.Actions.types.player) {
       state.players[action.player] = g.Player.handleAction(state.players[action.player], action)
     }
   },
-  handleKeyDown: function (e) {
+  handleKeyDown (e) {
     var code = e.key || e.code
     if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].indexOf(code) !== -1) {
       g.store.state.remainingActions.push([{type: g.Actions.types.player, player: 0, subtype: code}])

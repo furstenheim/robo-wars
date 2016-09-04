@@ -3,6 +3,8 @@ g.canvas = document.getElementById('c')
 g.c = g.canvas.getContext('2d')
 g.bgcanvas = document.getElementById('bgc')
 g.bgc = g.bgcanvas.getContext('2d')
+g.icanvas = document.getElementById('ic')
+g.ic = g.icanvas.getContext('2d')
 /**
  * Bind Socket.IO and button events
  */
@@ -35,12 +37,13 @@ function init() {
 }
 
 window.addEventListener("load", init, false);
-document.addEventListener('keydown', g.store.handleKeyDown, false)
+
 
 
 
 
 g.store.state = g.store.init()
+g.Input.render(g.Input.init())
 /*g.store.init()
 g.store.prepareGame()
 //var interval = setInterval(g.store.display, g.store.tick)

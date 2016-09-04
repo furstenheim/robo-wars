@@ -186,6 +186,56 @@ Object.assign(g.Game, {
     };
   }
 });
+g.Input = {
+  init: function () {
+    return {
+      time: new Date(),
+      actions: [{ type: g.Actions.types.player, player: 0, subtype: 'ArrowUp' }, { type: g.Actions.types.player, player: 0, subtype: 'ArrowRight' }, { type: g.Actions.types.player, player: 0, subtype: 'ArrowLeft' }, { type: g.Actions.types.player, player: 0, subtype: 'ArrowUp' }]
+    };
+  },
+  size: {
+    w: 800,
+    h: 100
+  },
+  max: 4,
+  render: function (input, fraction) {
+    var h = g.Input.size.h,
+        w = g.Input.size.w,
+        i,
+        c = g.ic,
+        d = ~~(h / 30),
+        action,
+        image;
+    c.clearRect(0, 0, w, h);
+    for (i = 0; i < g.Input.max; i++) {
+      c.rect(h * i + d, d, h - 2 * d, h - 2 * d);
+      action = input.actions[i];
+      if (action) {
+        c.save();
+        c.translate(h * i + h / 2, h / 2);
+        c.rotate(-g.Input.subtypeToTheta(action.subtype));
+        image = new Image();
+        image.src = g.Tiles['arrow'];
+        c.drawImage(image, -(h - 2 * d) / 2, -(h - 2 * d) / 2, h - 2 * d, h - 2 * d);
+        c.restore();
+      }
+    }
+    c.stroke();
+  },
+  clear: function () {
+    var h = g.Input.size.h,
+        w = g.Input.size.w,
+        c = g.ic;
+    c.clearRect(0, 0, w, h);
+  },
+  subtypeToTheta(subtype) {
+    var subtypes = ['ArrowRight', 'ArrowUp', 'ArrowLeft', 'ArrowDown'],
+        i = subtypes.indexOf(subtype);
+    if (i > -1) {
+      return P * i;
+    }
+  }
+};
 g.Player = {
   init: function (complex, playerType, orientation) {
 
@@ -258,6 +308,9 @@ g.store = {
     };
   },
   movement: 1000,
+  inputActions: 4,
+  inputTime: 2000,
+  listenInput: false,
   // tick depends movement so we need this wizardy
   get tick() {
     return this.movement / 60;
@@ -268,7 +321,22 @@ g.store = {
     g.store.state = state;
     g.store.render(oldState, state);
   },
-  prepareGame: function () {
+  acceptInput() {
+    if (!g.store.listenInput) {
+      g.store.listenInput = g.input.init();
+      document.addEventListener('keydown', g.store.handleKeyDown, false);
+      return window.requestAnimationFrame(g.store.acceptInput);
+    }
+    // TODO only send necessary actions
+    var remainingTime = g.store.inputTime - new Date() + g.store.listenInput.time;
+    if (remainingTime < 0) {
+      document.removeEventListener('keydown', g.store.handleKeyDown);
+      g.store.listenInput = false;
+      // TODO tell the server we are ready to go
+      return;
+    }
+  },
+  prepareGame() {
     var state = g.store.state,
         newState = clone(state),
         game = state.game;
@@ -279,7 +347,7 @@ g.store = {
     g.store.oldState = state;
     g.store.render(state, newState);
   },
-  render: function (oldState, newState, time) {
+  render(oldState, newState, time) {
     g.c.clearRect(0, 0, newState.game.w, newState.game.h);
     var oldTiles = oldState.tiles;
     var newTiles = newState.tiles;
@@ -295,7 +363,7 @@ g.store = {
       g.PlayerTile.render(game, (oldPlayers[i] || {}).t, (newPlayers[i] || {}).t, time);
     }
   },
-  displayMovement: function () {
+  displayMovement() {
     var oldState = g.store.oldState,
         state = g.store.state,
         newState = clone(state),
@@ -334,12 +402,12 @@ g.store = {
     window.requestAnimationFrame(g.store.displayMovement);
     //g.store.render(state, newState, g.store.time)
   },
-  handleAction: function (state, action) {
+  handleAction(state, action) {
     if (action.type === g.Actions.types.player) {
       state.players[action.player] = g.Player.handleAction(state.players[action.player], action);
     }
   },
-  handleKeyDown: function (e) {
+  handleKeyDown(e) {
     var code = e.key || e.code;
     if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].indexOf(code) !== -1) {
       g.store.state.remainingActions.push([{ type: g.Actions.types.player, player: 0, subtype: code }]);
@@ -368,6 +436,7 @@ g.Tiles = {};
 g.Tiles = {
   floor: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAYAAAAGCAYAAADgzO9IAAAABmJLR0QA/wD/AP+gvaeTAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH4AgSERAr62pHoQAAABl0RVh0Q29tbWVudABDcmVhdGVkIHdpdGggR0lNUFeBDhcAAAAWSURBVAjXY5wRzv2fAQtgYsAB6CEBACasAgXtJRiTAAAAAElFTkSuQmCC',
   player: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAYAAAAGCAYAAADgzO9IAAAABmJLR0QA/wD/AP+gvaeTAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH4AgbCQcdTm7r7AAAABl0RVh0Q29tbWVudABDcmVhdGVkIHdpdGggR0lNUFeBDhcAAAA5SURBVAjXdc1BCkJBAMPQ17n/mY2L8SMIFroJJV0FQ7bU4HwaqNnusgf+5PiTdZ3hbF65P18/PRDe6EIb/8frDKQAAAAASUVORK5CYII=',
+  arrow: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAYAAAAGCAYAAADgzO9IAAAABmJLR0QA/wD/AP+gvaeTAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH4AgbCQcdTm7r7AAAABl0RVh0Q29tbWVudABDcmVhdGVkIHdpdGggR0lNUFeBDhcAAAA5SURBVAjXdc1BCkJBAMPQ17n/mY2L8SMIFroJJV0FQ7bU4HwaqNnusgf+5PiTdZ3hbF65P18/PRDe6EIb/8frDKQAAAAASUVORK5CYII=',
   hole: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAYAAAAGCAYAAADgzO9IAAAABmJLR0QA/wD/AP+gvaeTAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH4AgVCicOvc1H+gAAABl0RVh0Q29tbWVudABDcmVhdGVkIHdpdGggR0lNUFeBDhcAAAAcSURBVAjXY2RgYPjPgAUwMeAA5Ev8RZdgxGU5ANPcAwYrkLWxAAAAAElFTkSuQmCC'
 };
 /* init variables here */
@@ -375,30 +444,32 @@ g.canvas = document.getElementById('c');
 g.c = g.canvas.getContext('2d');
 g.bgcanvas = document.getElementById('bgc');
 g.bgc = g.bgcanvas.getContext('2d');
+g.icanvas = document.getElementById('ic');
+g.ic = g.icanvas.getContext('2d');
 /**
  * Bind Socket.IO and button events
  */
 function bind() {
 
   socket.on('start', function (state) {
-    console.log('src/client/init.js:12:16:\'starting\'', 'starting');
+    console.log('src/client/init.js:14:16:\'starting\'', 'starting');
     g.store.startGame(JSON.parse(state));
     //console.log(state, position)
   });
   socket.on("end", function () {
-    console.log('src/client/init.js:17:16:"Waiting for opponent..."', "Waiting for opponent...");
+    console.log('src/client/init.js:19:16:"Waiting for opponent..."', "Waiting for opponent...");
   });
 
   socket.on("connect", function () {
-    console.log('src/client/init.js:21:16:"Waiting for opponent..."', "Waiting for opponent...");
+    console.log('src/client/init.js:23:16:"Waiting for opponent..."', "Waiting for opponent...");
   });
 
   socket.on("disconnect", function () {
-    console.error('src/client/init.js:25:18:"Connection lost!"', "Connection lost!");
+    console.error('src/client/init.js:27:18:"Connection lost!"', "Connection lost!");
   });
 
   socket.on("error", function () {
-    console.error('src/client/init.js:29:18:"Connection error!"', "Connection error!");
+    console.error('src/client/init.js:31:18:"Connection error!"', "Connection error!");
   });
 }
 function init() {
@@ -407,9 +478,9 @@ function init() {
 }
 
 window.addEventListener("load", init, false);
-document.addEventListener('keydown', g.store.handleKeyDown, false);
 
 g.store.state = g.store.init();
+g.Input.render(g.Input.init());
 /*g.store.init()
 g.store.prepareGame()
 //var interval = setInterval(g.store.display, g.store.tick)
