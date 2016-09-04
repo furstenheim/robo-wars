@@ -204,14 +204,17 @@ g.Input = {
         w = g.Input.size.w,
         c = g.ic,
         d = ~~(h / 30),
-        imgLoaded = 0;
+        imgLoaded = 0,
+        cx = h * g.Input.max + h / 2,
+        cy = h / 2;
     c.clearRect(0, 0, w, h);
     for (let i = 0; i < g.Input.max; i++) {
-      c.rect(h * i + d, d, h - 2 * d, h - 2 * d);
+      c.strokeStyle = 'black';
+      c.strokeRect(h * i + d, d, h - 2 * d, h - 2 * d);
       let action = input.actions[i];
       if (action) {
-        let image = new Image();
         c.save();
+        let image = new Image();
         c.translate(h * i + h / 2, h / 2);
         c.rotate(-g.Input.subtypeToTheta(action.subtype));
         image.src = g.Tiles['arrow'];
@@ -219,6 +222,16 @@ g.Input = {
         c.restore();
       }
     }
+    fraction = Math.max(Math.min(fraction, 1), 0);
+    c.save();
+    c.fillStyle = 'red';
+    c.beginPath();
+    c.moveTo(cx, cy);
+    c.arc(cx, cy, cy - 2 * d, 0, fraction * 4 * P);
+    c.lineTo(cx, cy);
+    c.closePath();
+    c.fill();
+    c.restore();
     c.stroke();
   },
   clear: function () {
@@ -341,7 +354,7 @@ g.store = {
       return window.requestAnimationFrame(g.store.acceptInput);
     }
     // TODO only send necessary actions
-    var remainingTime = (g.store.inputTime - new Date() + g.store.input.time) / g.store.inputTime;
+    var remainingTime = (g.store.inputTime - (new Date() - new Date(g.store.input.time))) / g.store.inputTime;
     if (remainingTime < 0) {
       document.removeEventListener('keydown', g.store.handleKeyDown);
       g.store.input = false;

@@ -18,16 +18,16 @@ var babel = require('gulp-babel')
 gulp.task('build', function () {
   var s = size()
   var client = merge(gulp.src(['src/client/*.*','!src/client/init.js'])
-          .pipe(babel({plugins:['meaningful-logs']})),
+          .pipe(createBabel()),
           gulp.src(['src/client/init.js'])
-            .pipe(babel({plugins:['meaningful-logs']})))
+            .pipe(createBabel()))
     .pipe(concat('client.js'))
     .pipe(insert.wrap('if (typeof window !== \'undefined\') {(function (){', '})()}'))
   var shared = gulp.src(['src/shared/shared.js', 'src/shared/*.*'])
-    .pipe(babel({plugins:['meaningful-logs']}))
+    .pipe(createBabel())
     .pipe(concat('shared.js'))
   var server = gulp.src('src/server/*.*')
-    .pipe(babel({plugins:['meaningful-logs']}))
+    .pipe(createBabel())
     .pipe(concat('server.js'))
     .pipe(insert.wrap('if (typeof window === \'undefined\') {(function (){', '})()}'))
 
@@ -67,3 +67,7 @@ gulp.task('watch', function () {
   gulp.watch(['./src/**/*.*'], ['build'])
 })
 gulp.task('default', [ 'watch'])
+
+function createBabel() {
+  return babel({plugins:['meaningful-logs']}).on('error', function (e) {console.error(e)})
+}

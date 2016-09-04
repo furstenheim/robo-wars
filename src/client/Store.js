@@ -27,7 +27,7 @@ g.store = {
       return window.requestAnimationFrame(g.store.acceptInput)
     }
     // TODO only send necessary actions
-    var remainingTime = (g.store.inputTime - new Date() + g.store.input.time) / g.store.inputTime
+    var remainingTime = (g.store.inputTime - (new Date() - new Date(g.store.input.time))) / g.store.inputTime
     if (remainingTime < 0) {
       document.removeEventListener('keydown', g.store.handleKeyDown)
       g.store.input = false
