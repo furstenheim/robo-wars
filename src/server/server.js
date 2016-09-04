@@ -97,8 +97,8 @@ User.prototype.setGuess = function (guess) {
 User.prototype.start = function (game, position) {
 	this.game = game
 	this.position = position
-	console.log('starting', game.state)
-	this.socket.emit("start", JSON.stringify(game.state))
+	console.log('Starting')
+	this.socket.emit("start", JSON.stringify(Object.assign(game.state, {position: position})))
 }
 
 /**

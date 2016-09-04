@@ -8,8 +8,10 @@ g.bgc = g.bgcanvas.getContext('2d')
  */
 function bind() {
 
-  socket.on('start', function (state, position) {
-    console.log(state, position)
+  socket.on('start', function (state) {
+    console.log('starting')
+    g.store.startGame(JSON.parse(state))
+    //console.log(state, position)
   })
   socket.on("end", function () {
     console.log("Waiting for opponent...");
@@ -38,7 +40,7 @@ document.addEventListener('keydown', g.store.handleKeyDown, false)
 
 
 
-
+g.store.state = g.store.init()
 /*g.store.init()
 g.store.prepareGame()
 //var interval = setInterval(g.store.display, g.store.tick)

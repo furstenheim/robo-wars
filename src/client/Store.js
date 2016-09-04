@@ -1,6 +1,6 @@
 g.store = {
   init: function () {
-    g.store.state = {
+    return {
       game: g.Game.init(),
       tiles: [],
       players: [],
@@ -11,6 +11,12 @@ g.store = {
   movement: 1000,
   // tick depends movement so we need this wizardy
   get tick() { return this.movement / 60 },
+  startGame(state) {
+    var oldState = g.store.state
+    g.store.oldState = oldState
+    g.store.state = state
+    g.store.render(oldState, state)
+  },
   prepareGame : function () {
     var state = g.store.state, newState = clone(state), game = state.game
     var result = g.Game.prepareGame(game)

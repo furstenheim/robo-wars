@@ -249,7 +249,7 @@ Object.assign(g.PlayerTile, {
 });
 g.store = {
   init: function () {
-    g.store.state = {
+    return {
       game: g.Game.init(),
       tiles: [],
       players: [],
@@ -261,6 +261,12 @@ g.store = {
   // tick depends movement so we need this wizardy
   get tick() {
     return this.movement / 60;
+  },
+  startGame(state) {
+    var oldState = g.store.state;
+    g.store.oldState = oldState;
+    g.store.state = state;
+    g.store.render(oldState, state);
   },
   prepareGame: function () {
     var state = g.store.state,
@@ -374,23 +380,25 @@ g.bgc = g.bgcanvas.getContext('2d');
  */
 function bind() {
 
-  socket.on('start', function (state, position) {
-    console.log('src/client/init.js:12:16:state,position', state, position);
+  socket.on('start', function (state) {
+    console.log('src/client/init.js:12:16:\'starting\'', 'starting');
+    g.store.startGame(JSON.parse(state));
+    //console.log(state, position)
   });
   socket.on("end", function () {
-    console.log('src/client/init.js:15:16:"Waiting for opponent..."', "Waiting for opponent...");
+    console.log('src/client/init.js:17:16:"Waiting for opponent..."', "Waiting for opponent...");
   });
 
   socket.on("connect", function () {
-    console.log('src/client/init.js:19:16:"Waiting for opponent..."', "Waiting for opponent...");
+    console.log('src/client/init.js:21:16:"Waiting for opponent..."', "Waiting for opponent...");
   });
 
   socket.on("disconnect", function () {
-    console.error('src/client/init.js:23:18:"Connection lost!"', "Connection lost!");
+    console.error('src/client/init.js:25:18:"Connection lost!"', "Connection lost!");
   });
 
   socket.on("error", function () {
-    console.error('src/client/init.js:27:18:"Connection error!"', "Connection error!");
+    console.error('src/client/init.js:29:18:"Connection error!"', "Connection error!");
   });
 }
 function init() {
@@ -401,6 +409,7 @@ function init() {
 window.addEventListener("load", init, false);
 document.addEventListener('keydown', g.store.handleKeyDown, false);
 
+g.store.state = g.store.init();
 /*g.store.init()
 g.store.prepareGame()
 //var interval = setInterval(g.store.display, g.store.tick)
@@ -507,8 +516,8 @@ User.prototype.setGuess = function (guess) {
 User.prototype.start = function (game, position) {
 	this.game = game;
 	this.position = position;
-	console.log("src/server/server.js:100:13:'starting',game.state", 'starting', game.state);
-	this.socket.emit("start", JSON.stringify(game.state));
+	console.log("src/server/server.js:100:13:'Starting'", 'Starting');
+	this.socket.emit("start", JSON.stringify(Object.assign(game.state, { position: position })));
 };
 
 /**
