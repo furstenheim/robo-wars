@@ -201,26 +201,29 @@ g.Input = {
   render: function (input, fraction) {
     var h = g.Input.size.h,
         w = g.Input.size.w,
-        i,
         c = g.ic,
         d = ~~(h / 30),
-        action,
-        image;
+        imgLoaded = 0;
     c.clearRect(0, 0, w, h);
-    for (i = 0; i < g.Input.max; i++) {
+    for (let i = 0; i < g.Input.max; i++) {
       c.rect(h * i + d, d, h - 2 * d, h - 2 * d);
-      action = input.actions[i];
+      let action = input.actions[i];
       if (action) {
-        c.save();
-        c.translate(h * i + h / 2, h / 2);
-        c.rotate(-g.Input.subtypeToTheta(action.subtype));
-        image = new Image();
+        let image = new Image();
+        image.onload = function () {
+          c.save();
+          c.translate(h * i + h / 2, h / 2);
+          c.rotate(-g.Input.subtypeToTheta(action.subtype));
+          c.drawImage(image, -(h - 2 * d) / 2, -(h - 2 * d) / 2, h - 2 * d, h - 2 * d);
+          c.restore();
+          loaded();
+        };
         image.src = g.Tiles['arrow'];
-        c.drawImage(image, -(h - 2 * d) / 2, -(h - 2 * d) / 2, h - 2 * d, h - 2 * d);
-        c.restore();
       }
     }
-    c.stroke();
+    function loaded() {
+      if (++imgLoaded === g.Input.max) c.stroke();
+    }
   },
   clear: function () {
     var h = g.Input.size.h,
