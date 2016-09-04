@@ -5,6 +5,11 @@ g.bgcanvas = document.getElementById('bgc')
 g.bgc = g.bgcanvas.getContext('2d')
 g.icanvas = document.getElementById('ic')
 g.ic = g.icanvas.getContext('2d')
+// Nasty trick to cache imgs and make loading sync
+for (let img in g.Tiles) {
+  let image = new Image()
+  image.src = g.Tiles[img]
+}
 /**
  * Bind Socket.IO and button events
  */
@@ -43,7 +48,8 @@ window.addEventListener("load", init, false);
 
 
 g.store.state = g.store.init()
-g.Input.render(g.Input.init())
+setTimeout(function () {g.Input.render(g.Input.init())}, 10)
+
 /*g.store.init()
 g.store.prepareGame()
 //var interval = setInterval(g.store.display, g.store.tick)

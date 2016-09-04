@@ -210,17 +210,15 @@ g.Input = {
       let action = input.actions[i];
       if (action) {
         let image = new Image();
-        image.onload = function () {
-          c.save();
-          c.translate(h * i + h / 2, h / 2);
-          c.rotate(-g.Input.subtypeToTheta(action.subtype));
-          c.drawImage(image, -(h - 2 * d) / 2, -(h - 2 * d) / 2, h - 2 * d, h - 2 * d);
-          c.restore();
-          loaded();
-        };
+        c.save();
+        c.translate(h * i + h / 2, h / 2);
+        c.rotate(-g.Input.subtypeToTheta(action.subtype));
         image.src = g.Tiles['arrow'];
+        c.drawImage(image, -(h - 2 * d) / 2, -(h - 2 * d) / 2, h - 2 * d, h - 2 * d);
+        c.restore();
       }
     }
+    c.stroke();
     function loaded() {
       if (++imgLoaded === g.Input.max) c.stroke();
     }
@@ -449,30 +447,35 @@ g.bgcanvas = document.getElementById('bgc');
 g.bgc = g.bgcanvas.getContext('2d');
 g.icanvas = document.getElementById('ic');
 g.ic = g.icanvas.getContext('2d');
+// Nasty trick to cache imgs and make loading sync
+for (let img in g.Tiles) {
+  let image = new Image();
+  image.src = g.Tiles[img];
+}
 /**
  * Bind Socket.IO and button events
  */
 function bind() {
 
   socket.on('start', function (state) {
-    console.log('src/client/init.js:14:16:\'starting\'', 'starting');
+    console.log('src/client/init.js:19:16:\'starting\'', 'starting');
     g.store.startGame(JSON.parse(state));
     //console.log(state, position)
   });
   socket.on("end", function () {
-    console.log('src/client/init.js:19:16:"Waiting for opponent..."', "Waiting for opponent...");
+    console.log('src/client/init.js:24:16:"Waiting for opponent..."', "Waiting for opponent...");
   });
 
   socket.on("connect", function () {
-    console.log('src/client/init.js:23:16:"Waiting for opponent..."', "Waiting for opponent...");
+    console.log('src/client/init.js:28:16:"Waiting for opponent..."', "Waiting for opponent...");
   });
 
   socket.on("disconnect", function () {
-    console.error('src/client/init.js:27:18:"Connection lost!"', "Connection lost!");
+    console.error('src/client/init.js:32:18:"Connection lost!"', "Connection lost!");
   });
 
   socket.on("error", function () {
-    console.error('src/client/init.js:31:18:"Connection error!"', "Connection error!");
+    console.error('src/client/init.js:36:18:"Connection error!"', "Connection error!");
   });
 }
 function init() {
@@ -483,7 +486,10 @@ function init() {
 window.addEventListener("load", init, false);
 
 g.store.state = g.store.init();
-g.Input.render(g.Input.init());
+setTimeout(function () {
+  g.Input.render(g.Input.init());
+}, 10);
+
 /*g.store.init()
 g.store.prepareGame()
 //var interval = setInterval(g.store.display, g.store.tick)

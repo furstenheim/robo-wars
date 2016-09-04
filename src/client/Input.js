@@ -22,17 +22,15 @@ g.Input = {
       let action = input.actions[i]
       if (action) {
         let image = new Image()
-        image.onload = function () {
-          c.save()
-          c.translate(h*i + h / 2, h /2)
-          c.rotate(-g.Input.subtypeToTheta(action.subtype))
-          c.drawImage(image, -(h - 2*d) / 2, -(h -2 * d) / 2, h-2 * d, h-2 * d)
-          c.restore()
-          loaded()
-        }
+        c.save()
+        c.translate(h*i + h / 2, h /2)
+        c.rotate(-g.Input.subtypeToTheta(action.subtype))
         image.src = g.Tiles['arrow']
+        c.drawImage(image, -(h - 2*d) / 2, -(h -2 * d) / 2, h-2 * d, h-2 * d)
+        c.restore()
       }
     }
+    c.stroke()
     function loaded () {
       if (++imgLoaded === g.Input.max) c.stroke()
     }
