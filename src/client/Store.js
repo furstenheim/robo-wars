@@ -30,6 +30,7 @@ g.store = {
     var remainingTime = (g.store.inputTime - (new Date() - new Date(g.store.input.time))) / g.store.inputTime
     if (remainingTime < 0) {
       document.removeEventListener('keydown', g.store.handleKeyDown)
+      g.store.input = g.Input.fillInput(g.store.input)
       g.Input.render(g.store.input, -1)
       g.store.input = false
       // TODO tell the server we are ready to go

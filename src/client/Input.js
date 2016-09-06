@@ -30,7 +30,6 @@ g.Input = {
       }
     }
     fraction = Math.max(Math.min(fraction, 1), 0)
-    console.log(fraction)
 
     if (fraction > 0) {
       c.beginPath()
@@ -62,6 +61,14 @@ g.Input = {
     if (right) {
       newInput.actions.push({type: g.Actions.types.player, subtype: code})
     } else {
+      newInput.actions.push({type: g.Actions.types.player, subtype: movements[~~ (Math.random() * 4)]})
+    }
+    return newInput
+  },
+  // Fill input to the total
+  fillInput (input) {
+    var newInput = clone(input), i
+    for (i = input.actions.length; i<g.Input.max; i++) {
       newInput.actions.push({type: g.Actions.types.player, subtype: movements[~~ (Math.random() * 4)]})
     }
     return newInput
