@@ -52,14 +52,14 @@ g.Input = {
       return P * i
     }
   },
-  // health goes from 0 to 1 1 is healthy
-  acceptAction(input, code, health) {
+  // health goes from 0 to 1 1 is healthy, remainingTime so we can prioritize
+  acceptAction(input, code, health, remainingTime) {
     var right = Math.random() < health, newInput = clone(input)
     if (input.actions.length >= g.Input.max) {
       return input
     }
     if (right) {
-      newInput.actions.push({type: g.Actions.types.player, subtype: code})
+      newInput.actions.push({type: g.Actions.types.player, subtype: code, remainingTime: remainingTime})
     } else {
       newInput.actions.push({type: g.Actions.types.player, subtype: movements[~~ (Math.random() * 4)]})
     }

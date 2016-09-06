@@ -32,6 +32,7 @@ g.store = {
       document.removeEventListener('keydown', g.store.handleKeyDown)
       g.store.input = g.Input.fillInput(g.store.input)
       g.Input.render(g.store.input, -1)
+      g.store.sendMovements(g.store.input.actions)
       g.store.input = false
       // TODO tell the server we are ready to go
       return
@@ -48,6 +49,10 @@ g.store = {
     g.store.state = newState
     g.store.oldState = state
     g.store.render(state, newState)
+  },
+  sendMovements(actions) {
+    console.log({actions: g.store.input.actions, position: g.store.state.position})
+    socket.emit('move', {actions: actions, position: g.store.state.position})
   },
   render(oldState, newState, time) {
     g.c.clearRect(0,0, newState.game.w, newState.game.h)
@@ -103,10 +108,10 @@ g.store = {
     }
   },
   handleKeyDown (e) {
-    var code = e.key || e.code, input = g.store.input, newInput = clone(input)
+    var code = e.key || e.code, input = g.store.input, newInput = clone(input), remainingTime = (g.store.inputTime - (new Date() - new Date(g.store.input.time))) / g.store.inputTime
     if (movements.indexOf(code) !== -1) {
       // TOOD pass health
-      g.store.input = g.Input.acceptAction(input, code, 0.8)
+      g.store.input = g.Input.acceptAction(input, code, 0.8, remainingTime)
     }
   }
 }

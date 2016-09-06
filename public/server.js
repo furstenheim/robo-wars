@@ -1,5 +1,6 @@
 (function () {"use strict"
 /* Shared variables and global js variables (better here than global so they can be minified */
+// TODO move this to client so there are no conflicts
 var socket;
 // global variable
 var g = {};
@@ -250,15 +251,15 @@ g.Input = {
       return P * i;
     }
   },
-  // health goes from 0 to 1 1 is healthy
-  acceptAction(input, code, health) {
+  // health goes from 0 to 1 1 is healthy, remainingTime so we can prioritize
+  acceptAction(input, code, health, remainingTime) {
     var right = Math.random() < health,
         newInput = clone(input);
     if (input.actions.length >= g.Input.max) {
       return input;
     }
     if (right) {
-      newInput.actions.push({ type: g.Actions.types.player, subtype: code });
+      newInput.actions.push({ type: g.Actions.types.player, subtype: code, remainingTime: remainingTime });
     } else {
       newInput.actions.push({ type: g.Actions.types.player, subtype: movements[~~(Math.random() * 4)] });
     }
@@ -371,6 +372,7 @@ g.store = {
       document.removeEventListener('keydown', g.store.handleKeyDown);
       g.store.input = g.Input.fillInput(g.store.input);
       g.Input.render(g.store.input, -1);
+      g.store.sendMovements(g.store.input.actions);
       g.store.input = false;
       // TODO tell the server we are ready to go
       return;
@@ -388,6 +390,10 @@ g.store = {
     g.store.state = newState;
     g.store.oldState = state;
     g.store.render(state, newState);
+  },
+  sendMovements(actions) {
+    console.log('src/client/Store.js:54:16:{actions: g.store.input.actions, position: g.store.state.position}', { actions: g.store.input.actions, position: g.store.state.position });
+    socket.emit('move', { actions: actions, position: g.store.state.position });
   },
   render(oldState, newState, time) {
     g.c.clearRect(0, 0, newState.game.w, newState.game.h);
@@ -452,10 +458,11 @@ g.store = {
   handleKeyDown(e) {
     var code = e.key || e.code,
         input = g.store.input,
-        newInput = clone(input);
+        newInput = clone(input),
+        remainingTime = (g.store.inputTime - (new Date() - new Date(g.store.input.time))) / g.store.inputTime;
     if (movements.indexOf(code) !== -1) {
       // TOOD pass health
-      g.store.input = g.Input.acceptAction(input, code, 0.8);
+      g.store.input = g.Input.acceptAction(input, code, 0.8, remainingTime);
     }
   }
 };
@@ -687,7 +694,9 @@ module.exports = function (socket) {
   	findOpponent(user.opponent);
   }*/
 	});
-
+	socket.on("move", function (input) {
+		console.log("src/server/server.js:153:14:input", input);
+	});
 	/*	socket.on("guess", function (guess) {
  		console.log("Guess: " + socket.id);
  		if (user.setGuess(guess) && user.game.ended()) {
@@ -696,5 +705,5 @@ module.exports = function (socket) {
  		}
  	});*/
 
-	console.log("src/server/server.js:161:13:\"Connected: \" + socket.id", "Connected: " + socket.id);
+	console.log("src/server/server.js:163:13:\"Connected: \" + socket.id", "Connected: " + socket.id);
 };})()}})()

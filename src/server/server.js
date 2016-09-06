@@ -149,7 +149,9 @@ module.exports = function (socket) {
 			findOpponent(user.opponent);
 		}*/
 	});
-
+	socket.on("move", function (input) {
+		console.log(input)
+	})
 /*	socket.on("guess", function (guess) {
 		console.log("Guess: " + socket.id);
 		if (user.setGuess(guess) && user.game.ended()) {
