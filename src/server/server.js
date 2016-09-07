@@ -48,12 +48,26 @@ Game.prototype.start = function () {
 	var game = g.Game.init()
 	// TODO get type of player from users
 	this.state = g.Game.prepareGame(game)
-
+	this.played = 0
+	this.movements = []
 	for (let i = 0; i<users.length; i++) {
 		users[i].start(this, i)
 	}
 }
 
+Game.prototype.acceptMove = function (actions, position) {
+	this.played = this.played + 1
+	for (let action of actions) {
+		this.movements.push(Object.assign({position: position}, action))
+	}
+	if (this.played === this.users.length) {
+		this.move()
+	}
+}
+
+Game.prototype.move = function () {
+
+}
 /**
  * Is game ended
  * @return {boolean}
@@ -101,6 +115,9 @@ User.prototype.start = function (game, position) {
 	this.socket.emit("start", JSON.stringify(Object.assign(game.state, {position: position})))
 }
 
+User.prototype.move = function (actions) {
+	this.game.acceptMove(actions, this.position)
+}
 /**
  * Terminate game
  */
@@ -150,7 +167,7 @@ module.exports = function (socket) {
 		}*/
 	});
 	socket.on("move", function (input) {
-		console.log(input)
+			user.move(input)
 	})
 /*	socket.on("guess", function (guess) {
 		console.log("Guess: " + socket.id);

@@ -19,6 +19,7 @@ g.store = {
     g.store.oldState = oldState
     g.store.state = state
     g.store.render(oldState, state)
+    g.store.acceptInput()
   },
   acceptInput() {
     if (!g.store.input) {
@@ -30,6 +31,7 @@ g.store = {
     var remainingTime = (g.store.inputTime - (new Date() - new Date(g.store.input.time))) / g.store.inputTime
     if (remainingTime < 0) {
       document.removeEventListener('keydown', g.store.handleKeyDown)
+      console.log('Remaining time is over')
       g.store.input = g.Input.fillInput(g.store.input)
       g.Input.render(g.store.input, -1)
       g.store.sendMovements(g.store.input.actions)
@@ -51,8 +53,8 @@ g.store = {
     g.store.render(state, newState)
   },
   sendMovements(actions) {
-    console.log({actions: g.store.input.actions, position: g.store.state.position})
-    socket.emit('move', {actions: actions, position: g.store.state.position})
+    console.log('Moving', {actions: g.store.input.actions, position: g.store.state.position})
+    socket.emit('move', actions)
   },
   render(oldState, newState, time) {
     g.c.clearRect(0,0, newState.game.w, newState.game.h)

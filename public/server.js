@@ -359,6 +359,7 @@ g.store = {
     g.store.oldState = oldState;
     g.store.state = state;
     g.store.render(oldState, state);
+    g.store.acceptInput();
   },
   acceptInput() {
     if (!g.store.input) {
@@ -370,6 +371,7 @@ g.store = {
     var remainingTime = (g.store.inputTime - (new Date() - new Date(g.store.input.time))) / g.store.inputTime;
     if (remainingTime < 0) {
       document.removeEventListener('keydown', g.store.handleKeyDown);
+      console.log('src/client/Store.js:34:18:\'Remaining time is over\'', 'Remaining time is over');
       g.store.input = g.Input.fillInput(g.store.input);
       g.Input.render(g.store.input, -1);
       g.store.sendMovements(g.store.input.actions);
@@ -392,8 +394,8 @@ g.store = {
     g.store.render(state, newState);
   },
   sendMovements(actions) {
-    console.log('src/client/Store.js:54:16:{actions: g.store.input.actions, position: g.store.state.position}', { actions: g.store.input.actions, position: g.store.state.position });
-    socket.emit('move', { actions: actions, position: g.store.state.position });
+    console.log('src/client/Store.js:56:16:\'Moving\',{actions: g.store.input.actions, position: g.store.state.position}', 'Moving', { actions: g.store.input.actions, position: g.store.state.position });
+    socket.emit('move', actions);
   },
   render(oldState, newState, time) {
     g.c.clearRect(0, 0, newState.game.w, newState.game.h);
@@ -535,7 +537,7 @@ window.addEventListener("load", init, false);
 
 g.store.state = g.store.init();
 //setTimeout(function () {g.Input.render(g.Input.init())}, 10)
-g.store.acceptInput();
+//g.store.acceptInput()
 /*g.store.init()
 g.store.prepareGame()
 //var interval = setInterval(g.store.display, g.store.tick)
@@ -598,12 +600,24 @@ Game.prototype.start = function () {
 	var game = g.Game.init();
 	// TODO get type of player from users
 	this.state = g.Game.prepareGame(game);
-
+	this.played = 0;
+	this.movements = [];
 	for (let i = 0; i < users.length; i++) {
 		users[i].start(this, i);
 	}
 };
 
+Game.prototype.acceptMove = function (actions, position) {
+	this.played = this.played + 1;
+	for (let action of actions) {
+		this.movements.push(Object.assign({ position: position }, action));
+	}
+	if (this.played === this.users.length) {
+		this.move();
+	}
+};
+
+Game.prototype.move = function () {};
 /**
  * Is game ended
  * @return {boolean}
@@ -642,10 +656,13 @@ User.prototype.setGuess = function (guess) {
 User.prototype.start = function (game, position) {
 	this.game = game;
 	this.position = position;
-	console.log("src/server/server.js:100:13:'Starting'", 'Starting');
+	console.log("src/server/server.js:114:13:'Starting'", 'Starting');
 	this.socket.emit("start", JSON.stringify(Object.assign(game.state, { position: position })));
 };
 
+User.prototype.move = function (actions) {
+	this.game.acceptMove(actions, this.position);
+};
 /**
  * Terminate game
  */
@@ -687,7 +704,7 @@ module.exports = function (socket) {
 	findOpponent(user);
 
 	socket.on("disconnect", function () {
-		console.log("src/server/server.js:145:14:\"Disconnected: \" + socket.id", "Disconnected: " + socket.id);
+		console.log("src/server/server.js:162:14:\"Disconnected: \" + socket.id", "Disconnected: " + socket.id);
 		removeUser(user);
 		/*if (user.opponent) {
   	user.opponent.end();
@@ -695,7 +712,7 @@ module.exports = function (socket) {
   }*/
 	});
 	socket.on("move", function (input) {
-		console.log("src/server/server.js:153:14:input", input);
+		user.move(input);
 	});
 	/*	socket.on("guess", function (guess) {
  		console.log("Guess: " + socket.id);
@@ -705,5 +722,5 @@ module.exports = function (socket) {
  		}
  	});*/
 
-	console.log("src/server/server.js:163:13:\"Connected: \" + socket.id", "Connected: " + socket.id);
+	console.log("src/server/server.js:180:13:\"Connected: \" + socket.id", "Connected: " + socket.id);
 };})()}})()
