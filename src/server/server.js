@@ -45,7 +45,7 @@ function Game(users) {
  * Start new game
  */
 Game.prototype.start = function () {
-	var game = g.Game.init()
+	var game = g.Game.init(), users = this.users
 	// TODO get type of player from users
 	this.state = g.Game.prepareGame(game)
 	this.played = 0
@@ -61,11 +61,20 @@ Game.prototype.acceptMove = function (actions, position) {
 		this.movements.push(Object.assign({position: position}, action))
 	}
 	if (this.played === this.users.length) {
+		console.log(this.movements)
 		this.move()
 	}
 }
 
 Game.prototype.move = function () {
+	var movements = this.movements
+	console.log('Start moving')
+	var stateAndActions = g.Game.computeMovements(this.state, movements)
+	this.state = stateAndActions.state
+	for (let user of this.users) {
+		console.log('sendActions')
+		user.sendActions(stateAndActions.actions)
+	}
 
 }
 /**
@@ -118,6 +127,10 @@ User.prototype.start = function (game, position) {
 User.prototype.move = function (actions) {
 	this.game.acceptMove(actions, this.position)
 }
+
+User.prototype.sendActions = function (actions) {
+	this.socket.emit('actions', actions)
+}
 /**
  * Terminate game
  */
@@ -160,6 +173,7 @@ module.exports = function (socket) {
 
 	socket.on("disconnect", function () {
 		console.log("Disconnected: " + socket.id);
+		// TODO handle logic in game, specially moves in the middle
 		removeUser(user);
 		/*if (user.opponent) {
 			user.opponent.end();
@@ -167,6 +181,7 @@ module.exports = function (socket) {
 		}*/
 	});
 	socket.on("move", function (input) {
+		// TODO check input
 			user.move(input)
 	})
 /*	socket.on("guess", function (guess) {

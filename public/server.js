@@ -4,7 +4,7 @@
 var socket;
 // global variable
 var g = {};
-var movements = ['ArrowRight', 'ArrowUp', 'ArrowLeft', 'ArrowDown'];
+var MOVEMENTS = ['ArrowRight', 'ArrowUp', 'ArrowLeft', 'ArrowDown'];
 function clone(object) {
   return JSON.parse(JSON.stringify(object));
 }
@@ -74,6 +74,60 @@ g.Game = {
       }
     }
     return { game: game, players: players, tiles: tiles };
+  },
+  computeMovements(state, movements) {
+    // We compute the resulting positions and actions and that is what we pass to the users, as the tiles they already know
+    var newState = clone(state),
+        processedActions = [],
+        players = newState.players;
+    for (let movement of movements) {
+      console.log('src/shared/Game.js:30:18:\'computeMovements\',movement', 'computeMovements', movement);
+      // ohh my old node without json destructuring
+      let position = movement.position;
+      let result = g.Player.handleAction(players[position], movement);
+      console.log('src/shared/Game.js:34:18:\'computeMovements\',result', 'computeMovements', result);
+      let playerMoved = { player: result.player, position: position };
+      // Let's do all the pushing (in case we don't stumble to a wall)
+      let playersToMove = [playerMoved];
+      let direction = result.direction;
+      if (direction) {
+        while (playerMoved = g.Game.computePlayerCollision(players, playerMoved.player, direction)) {
+          playersToMove.push(playerMoved);
+        }
+        console.log('src/shared/Game.js:43:20:playersToMove', playersToMove);
+        // Compute if the movement is possible, if not we abort all movements
+        if (g.Game.computeMovementObstruction(playersToMove[playersToMove.length - 1].player, newState)) {
+          // No movements so the player stays in the same place
+          playersToMove = [{ player: players[position], position: position }];
+        } else {
+          // TODO compute holes
+        }
+      }
+      let originalPlayer = playersToMove[0];
+      // TODO handle map laser, only for the moving player which is the first in the array
+      // TODO handle shooting
+      // TODO add postActions
+      processedActions.push({ movements: playersToMove });
+      for (let pl of playersToMove) {
+        players[pl.position] = pl.player;
+      }
+    }
+    return { state: newState, actions: processedActions };
+  },
+  computePlayerCollision(players, player, direction) {
+    for (let i = 0; i < players.length; i++) {
+      if (g.Player.collide(player, players[i])) {
+        return { position: i, player: g.Player.move(players[i], direction) };
+      }
+    }
+  },
+  computeMovementObstruction(player, state) {
+    // TODO check for blocks
+    var c = player.c,
+        game = state.game;
+    if (c.x < 0 || c.y < 0 || c.x > game.sx || c.y > game.sy) {
+      return true;
+    }
   }
 };
 g.Player = {
@@ -90,18 +144,25 @@ g.Player = {
   handleAction(player, action) {
     var subtype = action.subtype;
     if (subtype === 'ArrowUp') {
-      return g.Player.init(Complex.add(player.c, player.o), player.type, player.o);
+      // Need movement in case we push another player
+      return { player: g.Player.move(player, player.o), direction: player.o };
     }
     if (subtype === 'ArrowLeft') {
-      return g.Player.init(player.c, player.type, Complex.multiply(player.o, { x: 0, y: -1 }));
+      return { player: g.Player.init(player.c, player.type, Complex.multiply(player.o, { x: 0, y: -1 })) };
     }
     if (subtype === 'ArrowRight') {
       // Canvas coordinates grow from top to bottom so orientation is the other sign as usual
-      return g.Player.init(player.c, player.type, Complex.multiply(player.o, { x: 0, y: 1 }));
+      return { player: g.Player.init(player.c, player.type, Complex.multiply(player.o, { x: 0, y: 1 })) };
     }
     if (subtype === 'ArrowDown') {
-      return g.Player.init(Complex.add(player.c, Complex.multiply({ x: -1, y: 0 }, player.o)), player.type, player.o);
+      return { player: g.Player.move(player, Complex.multiply({ x: -1, y: 0 }, player.o)), direction: Complex.multiply({ x: -1, y: 0 }, player.o) };
     }
+  },
+  move(player, vector) {
+    return g.Player.init(Complex.add(player.c, vector), player.type, player.o);
+  },
+  collide(pl1, pl2) {
+    return pl1.c.x === pl2.c.x && pl1.c.y === pl2.c.y;
   }
 
 };
@@ -245,7 +306,7 @@ g.Input = {
     c.clearRect(0, 0, w, h);
   },
   subtypeToTheta(subtype) {
-    var subtypes = movements,
+    var subtypes = MOVEMENTS,
         i = subtypes.indexOf(subtype);
     if (i > -1) {
       return P * i;
@@ -261,7 +322,7 @@ g.Input = {
     if (right) {
       newInput.actions.push({ type: g.Actions.types.player, subtype: code, remainingTime: remainingTime });
     } else {
-      newInput.actions.push({ type: g.Actions.types.player, subtype: movements[~~(Math.random() * 4)] });
+      newInput.actions.push({ type: g.Actions.types.player, subtype: MOVEMENTS[~~(Math.random() * 4)], remainingTime: remainingTime });
     }
     return newInput;
   },
@@ -270,7 +331,7 @@ g.Input = {
     var newInput = clone(input),
         i;
     for (i = input.actions.length; i < g.Input.max; i++) {
-      newInput.actions.push({ type: g.Actions.types.player, subtype: movements[~~(Math.random() * 4)] });
+      newInput.actions.push({ type: g.Actions.types.player, subtype: MOVEMENTS[~~(Math.random() * 4)], remainingTime: 0 });
     }
     return newInput;
   }
@@ -394,7 +455,7 @@ g.store = {
     g.store.render(state, newState);
   },
   sendMovements(actions) {
-    console.log('src/client/Store.js:56:16:\'Moving\',{actions: g.store.input.actions, position: g.store.state.position}', 'Moving', { actions: g.store.input.actions, position: g.store.state.position });
+    console.log('src/client/Store.js:56:16:\'Moving\',actions,{actions: g.store.input.actions}', 'Moving', actions, { actions: g.store.input.actions });
     socket.emit('move', actions);
   },
   render(oldState, newState, time) {
@@ -462,7 +523,7 @@ g.store = {
         input = g.store.input,
         newInput = clone(input),
         remainingTime = (g.store.inputTime - (new Date() - new Date(g.store.input.time))) / g.store.inputTime;
-    if (movements.indexOf(code) !== -1) {
+    if (MOVEMENTS.indexOf(code) !== -1) {
       // TOOD pass health
       g.store.input = g.Input.acceptAction(input, code, 0.8, remainingTime);
     }
@@ -507,25 +568,28 @@ for (let img in g.Tiles) {
  */
 function bind() {
 
+  socket.on('actions', function (actions) {
+    console.log('src/client/init.js:19:16:\'actions\'', 'actions');
+  });
   socket.on('start', function (state) {
-    console.log('src/client/init.js:19:16:\'starting\'', 'starting');
+    console.log('src/client/init.js:22:16:\'starting\'', 'starting');
     g.store.startGame(JSON.parse(state));
     //console.log(state, position)
   });
   socket.on("end", function () {
-    console.log('src/client/init.js:24:16:"Waiting for opponent..."', "Waiting for opponent...");
+    console.log('src/client/init.js:27:16:"Waiting for opponent..."', "Waiting for opponent...");
   });
 
   socket.on("connect", function () {
-    console.log('src/client/init.js:28:16:"Waiting for opponent..."', "Waiting for opponent...");
+    console.log('src/client/init.js:31:16:"Waiting for opponent..."', "Waiting for opponent...");
   });
 
   socket.on("disconnect", function () {
-    console.error('src/client/init.js:32:18:"Connection lost!"', "Connection lost!");
+    console.error('src/client/init.js:35:18:"Connection lost!"', "Connection lost!");
   });
 
   socket.on("error", function () {
-    console.error('src/client/init.js:36:18:"Connection error!"', "Connection error!");
+    console.error('src/client/init.js:39:18:"Connection error!"', "Connection error!");
   });
 }
 function init() {
@@ -597,7 +661,8 @@ function Game(users) {
  * Start new game
  */
 Game.prototype.start = function () {
-	var game = g.Game.init();
+	var game = g.Game.init(),
+	    users = this.users;
 	// TODO get type of player from users
 	this.state = g.Game.prepareGame(game);
 	this.played = 0;
@@ -613,11 +678,21 @@ Game.prototype.acceptMove = function (actions, position) {
 		this.movements.push(Object.assign({ position: position }, action));
 	}
 	if (this.played === this.users.length) {
+		console.log('src/server/server.js:64:14:this.movements', this.movements);
 		this.move();
 	}
 };
 
-Game.prototype.move = function () {};
+Game.prototype.move = function () {
+	var movements = this.movements;
+	console.log('src/server/server.js:71:13:\'Start moving\'', 'Start moving');
+	var stateAndActions = g.Game.computeMovements(this.state, movements);
+	this.state = stateAndActions.state;
+	for (let user of this.users) {
+		console.log('src/server/server.js:75:14:\'sendActions\'', 'sendActions');
+		user.sendActions(stateAndActions.actions);
+	}
+};
 /**
  * Is game ended
  * @return {boolean}
@@ -656,12 +731,16 @@ User.prototype.setGuess = function (guess) {
 User.prototype.start = function (game, position) {
 	this.game = game;
 	this.position = position;
-	console.log("src/server/server.js:114:13:'Starting'", 'Starting');
+	console.log('src/server/server.js:123:13:\'Starting\'', 'Starting');
 	this.socket.emit("start", JSON.stringify(Object.assign(game.state, { position: position })));
 };
 
 User.prototype.move = function (actions) {
 	this.game.acceptMove(actions, this.position);
+};
+
+User.prototype.sendActions = function (actions) {
+	this.socket.emit('actions', actions);
 };
 /**
  * Terminate game
@@ -704,7 +783,8 @@ module.exports = function (socket) {
 	findOpponent(user);
 
 	socket.on("disconnect", function () {
-		console.log("src/server/server.js:162:14:\"Disconnected: \" + socket.id", "Disconnected: " + socket.id);
+		console.log('src/server/server.js:175:14:"Disconnected: " + socket.id', "Disconnected: " + socket.id);
+		// TODO handle logic in game, specially moves in the middle
 		removeUser(user);
 		/*if (user.opponent) {
   	user.opponent.end();
@@ -712,6 +792,7 @@ module.exports = function (socket) {
   }*/
 	});
 	socket.on("move", function (input) {
+		// TODO check input
 		user.move(input);
 	});
 	/*	socket.on("guess", function (guess) {
@@ -722,5 +803,5 @@ module.exports = function (socket) {
  		}
  	});*/
 
-	console.log("src/server/server.js:180:13:\"Connected: \" + socket.id", "Connected: " + socket.id);
+	console.log('src/server/server.js:195:13:"Connected: " + socket.id', "Connected: " + socket.id);
 };})()}})()

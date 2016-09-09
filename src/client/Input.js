@@ -47,7 +47,7 @@ g.Input = {
     c.clearRect(0,0, w, h)
   },
   subtypeToTheta(subtype) {
-    var subtypes = movements, i = subtypes.indexOf(subtype)
+    var subtypes = MOVEMENTS, i = subtypes.indexOf(subtype)
     if (i > -1) {
       return P * i
     }
@@ -61,7 +61,7 @@ g.Input = {
     if (right) {
       newInput.actions.push({type: g.Actions.types.player, subtype: code, remainingTime: remainingTime})
     } else {
-      newInput.actions.push({type: g.Actions.types.player, subtype: movements[~~ (Math.random() * 4)]})
+      newInput.actions.push({type: g.Actions.types.player, subtype: MOVEMENTS[~~ (Math.random() * 4)], remainingTime: remainingTime})
     }
     return newInput
   },
@@ -69,7 +69,7 @@ g.Input = {
   fillInput (input) {
     var newInput = clone(input), i
     for (i = input.actions.length; i<g.Input.max; i++) {
-      newInput.actions.push({type: g.Actions.types.player, subtype: movements[~~ (Math.random() * 4)]})
+      newInput.actions.push({type: g.Actions.types.player, subtype: MOVEMENTS[~~ (Math.random() * 4)], remainingTime: 0})
     }
     return newInput
   }

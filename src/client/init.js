@@ -15,6 +15,9 @@ for (let img in g.Tiles) {
  */
 function bind() {
 
+  socket.on('actions', function (actions) {
+    console.log('actions')
+  })
   socket.on('start', function (state) {
     console.log('starting')
     g.store.startGame(JSON.parse(state))

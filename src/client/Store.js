@@ -53,7 +53,7 @@ g.store = {
     g.store.render(state, newState)
   },
   sendMovements(actions) {
-    console.log('Moving', {actions: g.store.input.actions, position: g.store.state.position})
+    console.log('Moving', actions, {actions: g.store.input.actions})
     socket.emit('move', actions)
   },
   render(oldState, newState, time) {
@@ -111,7 +111,7 @@ g.store = {
   },
   handleKeyDown (e) {
     var code = e.key || e.code, input = g.store.input, newInput = clone(input), remainingTime = (g.store.inputTime - (new Date() - new Date(g.store.input.time))) / g.store.inputTime
-    if (movements.indexOf(code) !== -1) {
+    if (MOVEMENTS.indexOf(code) !== -1) {
       // TOOD pass health
       g.store.input = g.Input.acceptAction(input, code, 0.8, remainingTime)
     }
