@@ -43,6 +43,13 @@ g.store = {
     window.requestAnimationFrame(g.store.acceptInput)
 
   },
+  acceptActions (actions) {
+    var state = g.store.state, newState = clone(state)
+    newState.remainingActions = actions
+    g.store.oldState = state
+    g.store.state = newState
+    g.store.displayMovement()
+  },
   prepareGame() {
     var state = g.store.state, newState = clone(state), game = state.game
     var result = g.Game.prepareGame(game)
@@ -73,8 +80,8 @@ g.store = {
     }
   },
   displayMovement() {
-    var oldState = g.store.oldState, state = g.store.state, newState = clone(state), game = state.game, animating = g.store.animating,
-      elapsedTime = new Date() - g.store.time, remainingActions = newState.remainingActions, postActions = newState.postActions, nextActions
+    var oldState = g.store.oldState, state = g.store.state, game = state.game, animating = g.store.animating,
+      elapsedTime = new Date() - g.store.time
     // we need to do post Actions
     if (animating) {
       // Leave one tick to make sure we draw the end of it
@@ -85,18 +92,19 @@ g.store = {
       // Render one just time to make sure we render correctly
       return g.store.render(oldState, state, elapsedTime)
     }
-
-    if (postActions.length) {
+    var newState = clone(state), remainingActions = newState.remainingActions, /*postActions = newState.postActions,*/ nextActions
+    /*if (postActions.length) {
       // TODO laser, holes, lives...
-    }
+    }*/
     if (!remainingActions.length) {
       return
     }
     // Prepare the actions
     nextActions = remainingActions.shift()
-    for (let nextAction of nextActions) {
-      g.store.handleAction(newState, nextAction)
+    for (let movement of nextActions.movements) {
+      Object.assign(newState.players[movement.position], movement.player)
     }
+    // TODO handle postactions
     g.store.oldState = state
     g.store.state = newState
     g.store.animating = true

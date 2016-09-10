@@ -443,6 +443,14 @@ g.store = {
     g.Input.render(g.store.input, remainingTime);
     window.requestAnimationFrame(g.store.acceptInput);
   },
+  acceptActions(actions) {
+    var state = g.store.state,
+        newState = clone(state);
+    newState.remainingActions = actions;
+    g.store.oldState = state;
+    g.store.state = newState;
+    g.store.displayMovement();
+  },
   prepareGame() {
     var state = g.store.state,
         newState = clone(state),
@@ -455,7 +463,7 @@ g.store = {
     g.store.render(state, newState);
   },
   sendMovements(actions) {
-    console.log('src/client/Store.js:56:16:\'Moving\',actions,{actions: g.store.input.actions}', 'Moving', actions, { actions: g.store.input.actions });
+    console.log('src/client/Store.js:63:16:\'Moving\',actions,{actions: g.store.input.actions}', 'Moving', actions, { actions: g.store.input.actions });
     socket.emit('move', actions);
   },
   render(oldState, newState, time) {
@@ -477,13 +485,9 @@ g.store = {
   displayMovement() {
     var oldState = g.store.oldState,
         state = g.store.state,
-        newState = clone(state),
         game = state.game,
         animating = g.store.animating,
-        elapsedTime = new Date() - g.store.time,
-        remainingActions = newState.remainingActions,
-        postActions = newState.postActions,
-        nextActions;
+        elapsedTime = new Date() - g.store.time;
     // we need to do post Actions
     if (animating) {
       // Leave one tick to make sure we draw the end of it
@@ -494,18 +498,21 @@ g.store = {
       // Render one just time to make sure we render correctly
       return g.store.render(oldState, state, elapsedTime);
     }
-
-    if (postActions.length) {
+    var newState = clone(state),
+        remainingActions = newState.remainingActions,
+        /*postActions = newState.postActions,*/nextActions;
+    /*if (postActions.length) {
       // TODO laser, holes, lives...
-    }
+    }*/
     if (!remainingActions.length) {
       return;
     }
     // Prepare the actions
     nextActions = remainingActions.shift();
-    for (let nextAction of nextActions) {
-      g.store.handleAction(newState, nextAction);
+    for (let movement of nextActions.movements) {
+      Object.assign(newState.players[movement.position], movement.player);
     }
+    // TODO handle postactions
     g.store.oldState = state;
     g.store.state = newState;
     g.store.animating = true;
@@ -569,27 +576,28 @@ for (let img in g.Tiles) {
 function bind() {
 
   socket.on('actions', function (actions) {
-    console.log('src/client/init.js:19:16:\'actions\'', 'actions');
+    g.store.acceptActions(actions);
+    console.log('src/client/init.js:20:16:actions', actions);
   });
   socket.on('start', function (state) {
-    console.log('src/client/init.js:22:16:\'starting\'', 'starting');
+    console.log('src/client/init.js:23:16:\'starting\'', 'starting');
     g.store.startGame(JSON.parse(state));
     //console.log(state, position)
   });
   socket.on("end", function () {
-    console.log('src/client/init.js:27:16:"Waiting for opponent..."', "Waiting for opponent...");
+    console.log('src/client/init.js:28:16:"Waiting for opponent..."', "Waiting for opponent...");
   });
 
   socket.on("connect", function () {
-    console.log('src/client/init.js:31:16:"Waiting for opponent..."', "Waiting for opponent...");
+    console.log('src/client/init.js:32:16:"Waiting for opponent..."', "Waiting for opponent...");
   });
 
   socket.on("disconnect", function () {
-    console.error('src/client/init.js:35:18:"Connection lost!"', "Connection lost!");
+    console.error('src/client/init.js:36:18:"Connection lost!"', "Connection lost!");
   });
 
   socket.on("error", function () {
-    console.error('src/client/init.js:39:18:"Connection error!"', "Connection error!");
+    console.error('src/client/init.js:40:18:"Connection error!"', "Connection error!");
   });
 }
 function init() {
