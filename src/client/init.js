@@ -5,10 +5,13 @@ g.bgcanvas = document.getElementById('bgc')
 g.bgc = g.bgcanvas.getContext('2d')
 g.icanvas = document.getElementById('ic')
 g.ic = g.icanvas.getContext('2d')
+g.health = getById('health')
+g.images = {}
 // Nasty trick to cache imgs and make loading sync
 for (let img in g.Tiles) {
   let image = new Image()
   image.src = g.Tiles[img]
+  g.images[img] = image
 }
 /**
  * Bind Socket.IO and button events

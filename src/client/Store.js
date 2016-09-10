@@ -19,7 +19,6 @@ g.store = {
     g.store.oldState = oldState
     g.store.state = state
     g.store.render(oldState, state)
-    getById('health').textContent = '100%'
     g.store.acceptInput()
   },
   acceptInput() {

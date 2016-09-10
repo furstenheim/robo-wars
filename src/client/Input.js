@@ -21,10 +21,9 @@ g.Input = {
       let action = input.actions[i]
       if (action) {
         c.save()
-        let image = new Image()
+        let image = g.images['arrow']
         c.translate(h*i + h / 2, h /2)
         c.rotate(-g.Input.subtypeToTheta(action.subtype))
-        image.src = g.Tiles['arrow']
         c.drawImage(image, -(h - 2*d) / 2, -(h -2 * d) / 2, h-2 * d, h-2 * d)
         c.restore()
       }

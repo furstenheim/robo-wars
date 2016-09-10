@@ -9,8 +9,7 @@ Object.assign(g.Tile,
     }
     var realCoordinates = g.Game.getRealCoordinates(game, newTile.x, newTile.y)
     var c = g.bgc
-    var floor = new Image()
-    floor.src = g.Tiles[newTile.type]
+    var floor = g.images[newTile.type]
     c.drawImage(floor, realCoordinates.x, realCoordinates.y, realCoordinates.w, realCoordinates.h)
   }
 })

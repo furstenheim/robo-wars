@@ -24,8 +24,7 @@ Object.assign(g.PlayerTile, {
     var halfImageHeight = finalCoordinates.h /2
     g.c.translate(newX + halfImageWidth, newY + halfImageHeight)
     g.c.rotate(theta)
-    var player = new Image()
-    player.src = g.Tiles[newState.type]
+    var player = g.images[newState.type]
     c.drawImage(
       player,
       -halfImageHeight,
