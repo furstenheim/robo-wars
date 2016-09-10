@@ -17,7 +17,7 @@ var babel = require('gulp-babel')
 
 gulp.task('build', function () {
   var s = size()
-  var client = merge(gulp.src(['src/client/*.*','!src/client/init.js'])
+  var client = merge(gulp.src(['src/client/globals.js','src/client/*.*','!src/client/init.js'])
           .pipe(createBabel()),
           gulp.src(['src/client/init.js'])
             .pipe(createBabel()))

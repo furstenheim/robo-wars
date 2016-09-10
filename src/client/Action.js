@@ -1,3 +1,4 @@
+/*
 g.Action = {
   init: function (type, params) {
     var action
@@ -5,6 +6,8 @@ g.Action = {
       case 'playerMovement':
         action = g.Action.player(params)
         break
+      case 'laser':
+
       default:
         action = {}
         break
@@ -17,4 +20,4 @@ g.Action = {
       player: params.player
     }
   }
-}
+}*/

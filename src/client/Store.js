@@ -19,6 +19,7 @@ g.store = {
     g.store.oldState = oldState
     g.store.state = state
     g.store.render(oldState, state)
+    getById('health').textContent = '100%'
     g.store.acceptInput()
   },
   acceptInput() {
@@ -92,20 +93,30 @@ g.store = {
       // Render one just time to make sure we render correctly
       return g.store.render(oldState, state, elapsedTime)
     }
-    var newState = clone(state), remainingActions = newState.remainingActions, /*postActions = newState.postActions,*/ nextActions
-    /*if (postActions.length) {
+    var newState = clone(state), remainingActions = newState.remainingActions, postActions = newState.postActions, nextActions
+    // Handle post actions from previous movement
+    if (postActions.length) {
+      for (let postAction of postActions) {
+        console.log(postAction)
+        g.store.handleAction(newState, postAction)
+      }
+      newState.postActions = []
+
       // TODO laser, holes, lives...
-    }*/
-    if (!remainingActions.length) {
-      g.store.acceptInput()
-      return
+    } else {
+      // Handle actions
+      if (!remainingActions.length) {
+        g.store.acceptInput()
+        return
+      }
+      // Prepare the actions
+      nextActions = remainingActions.shift()
+      for (let movement of nextActions.movements) {
+        Object.assign(newState.players[movement.position], movement.player)
+      }
+      newState.postActions = nextActions.postActions
     }
-    // Prepare the actions
-    nextActions = remainingActions.shift()
-    for (let movement of nextActions.movements) {
-      Object.assign(newState.players[movement.position], movement.player)
-    }
-    // TODO handle postactions
+     // TODO handle postactions
     g.store.oldState = state
     g.store.state = newState
     g.store.animating = true
@@ -114,8 +125,10 @@ g.store = {
     //g.store.render(state, newState, g.store.time)
   },
   handleAction (state, action) {
-    if (action.type === g.Actions.types.player) {
-      state.players[action.player] = g.Player.handleAction(state.players[action.player], action)
+    if (action.type === g.Actions.types.laser) {
+      Object.assign(state.players[action.oposition], action.oplayer)
+      // TODO add laser to animation
+      return
     }
   },
   handleKeyDown (e) {

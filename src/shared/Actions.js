@@ -5,6 +5,7 @@ g.Actions = {
     }
   },
   types: {
-    player: 'player'
+    player: 'player',
+    laser: 'laser'
   }
 }

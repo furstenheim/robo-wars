@@ -13,7 +13,7 @@ g.Game = {
   prepareGame: function (game) {
     var i,j, types = ['floor', 'floor'], type, tiles=[], players=[],distorsionsx = [0, 0.1, 0.99, 1/2], distorsionsy = [ 1/2, 0.55, 1/2, 0.99] /*distorsionsx = [0, 1/2, 0.99, 1/2], distorsionsy = [ 1/2, 0, 1/2, 0.99]*/, distorsionst = [[1, 0], [0,1], [-1, 0], [0, -1]]
     for (i=0; i<game.np; i++) {
-      players.push(g.Player.init(Complex(~~ (distorsionsx[i] * game.sx), ~~ (distorsionsy[i] * game.sy)), 'player', Complex(distorsionst[i])))
+      players.push(g.Player.init(Complex(~~ (distorsionsx[i] * game.sx), ~~ (distorsionsy[i] * game.sy)), 'player', Complex(distorsionst[i]), 1))
     }
     for (i=0; i < game.sx; i++) {
       for (j =0; j < game.sy; j++) {
@@ -21,11 +21,11 @@ g.Game = {
         tiles.push(g.Tile.init(i, j, type))
       }
     }
-    return {game: game, players: players, tiles: tiles}
+    return {game: game, players: players, tiles: tiles, remainingActions: [], postActions: []}
   },
   computeMovements (state, movements) {
     // We compute the resulting positions and actions and that is what we pass to the users, as the tiles they already know
-    var newState = clone(state), processedActions = [], players = newState.players
+    var newState = clone(state), processedActions = [], players = newState.players, laserAction
     for (let movement of movements) {
       console.log('computeMovements', movement)
       // ohh my old node without json destructuring
@@ -37,10 +37,9 @@ g.Game = {
       let playersToMove = [playerMoved]
       let direction = result.direction
       if (direction) {
-        while (playerMoved = g.Game.computePlayerCollision(players, playerMoved.player, direction)) {
+        while (playerMoved = g.Game.computePlayerCollision(playerMoved.player, players, direction)) {
           playersToMove.push(playerMoved)
         }
-        console.log(playersToMove)
         // Compute if the movement is possible, if not we abort all movements
         if (g.Game.computeMovementObstruction(playersToMove[playersToMove.length -1].player, newState)) {
           // No movements so the player stays in the same place
@@ -49,18 +48,23 @@ g.Game = {
           // TODO compute holes
         }
       }
-      let originalPlayer = playersToMove[0]
-      // TODO handle map laser, only for the moving player which is the first in the array
-      // TODO handle shooting
-      // TODO add postActions
-      processedActions.push({movements: playersToMove})
+      console.log(playersToMove.length)
       for (let pl of playersToMove) {
         players[pl.position] = pl.player
       }
+      let postActions = []
+      let originalPlayer = players[position]
+      if (laserAction =  g.Game.computeLasers(originalPlayer, players, newState)) {
+        //players[laserAction.oposition] = g.Player.decreaseHealth(laserAction.oplayer)
+        postActions.push(laserAction)
+      }
+      // TODO handle shooting
+      // TODO add postActions
+      processedActions.push({movements: playersToMove, postActions: postActions})
     }
     return {state: newState, actions: processedActions}
   },
-  computePlayerCollision (players, player, direction) {
+  computePlayerCollision (player, players, direction) {
     for (let i = 0; i< players.length; i++) {
       if (g.Player.collide(player, players[i])) {
         return {position: i, player: g.Player.move(players[i], direction)}
@@ -72,6 +76,21 @@ g.Game = {
     var c = player.c, game = state.game
     if (c.x < 0 || c.y < 0 || c.x > game.sx || c.y > game.sy) {
       return true
+    }
+  },
+  computeLasers (player, players, state) {
+    var playerProjection = player
+    // Laser blasts up to four
+    for (let i = 0; i < 4; i++) {
+      playerProjection = g.Player.handleAction(playerProjection, {subtype: 'ArrowUp'}).player
+      // Nothing to shoot
+      if (g.Game.computeMovementObstruction(playerProjection, state)) return false
+      for (let i = 0; i < players.length; i++) {
+        if (g.Player.collide(playerProjection, players[i])) {
+          console.log('colliding', playerProjection, i, players[i])
+          return {type: 'laser', player: player, oplayer: players[i], oposition: i}
+        }
+      }
     }
   }
 }

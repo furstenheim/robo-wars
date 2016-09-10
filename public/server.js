@@ -1,7 +1,7 @@
 (function () {"use strict"
 /* Shared variables and global js variables (better here than global so they can be minified */
 // TODO move this to client so there are no conflicts
-var socket;
+//var socket
 // global variable
 var g = {};
 var MOVEMENTS = ['ArrowRight', 'ArrowUp', 'ArrowLeft', 'ArrowDown'];
@@ -10,6 +10,17 @@ function clone(object) {
 }
 // Half PI
 var P = Math.PI / 2;
+g.Actions = {
+  init: function () {
+    return {
+      players: []
+    };
+  },
+  types: {
+    player: 'player',
+    laser: 'laser'
+  }
+};
 // Use complex to rotate, move on the plane
 function Complex(x, y) {
   if (Array.isArray(x)) {
@@ -65,7 +76,7 @@ g.Game = {
         distorsionsy = [1 / 2, 0.55, 1 / 2, 0.99] /*distorsionsx = [0, 1/2, 0.99, 1/2], distorsionsy = [ 1/2, 0, 1/2, 0.99]*/,
         distorsionst = [[1, 0], [0, 1], [-1, 0], [0, -1]];
     for (i = 0; i < game.np; i++) {
-      players.push(g.Player.init(Complex(~~(distorsionsx[i] * game.sx), ~~(distorsionsy[i] * game.sy)), 'player', Complex(distorsionst[i])));
+      players.push(g.Player.init(Complex(~~(distorsionsx[i] * game.sx), ~~(distorsionsy[i] * game.sy)), 'player', Complex(distorsionst[i]), 1));
     }
     for (i = 0; i < game.sx; i++) {
       for (j = 0; j < game.sy; j++) {
@@ -73,13 +84,14 @@ g.Game = {
         tiles.push(g.Tile.init(i, j, type));
       }
     }
-    return { game: game, players: players, tiles: tiles };
+    return { game: game, players: players, tiles: tiles, remainingActions: [], postActions: [] };
   },
   computeMovements(state, movements) {
     // We compute the resulting positions and actions and that is what we pass to the users, as the tiles they already know
     var newState = clone(state),
         processedActions = [],
-        players = newState.players;
+        players = newState.players,
+        laserAction;
     for (let movement of movements) {
       console.log('src/shared/Game.js:30:18:\'computeMovements\',movement', 'computeMovements', movement);
       // ohh my old node without json destructuring
@@ -91,10 +103,9 @@ g.Game = {
       let playersToMove = [playerMoved];
       let direction = result.direction;
       if (direction) {
-        while (playerMoved = g.Game.computePlayerCollision(players, playerMoved.player, direction)) {
+        while (playerMoved = g.Game.computePlayerCollision(playerMoved.player, players, direction)) {
           playersToMove.push(playerMoved);
         }
-        console.log('src/shared/Game.js:43:20:playersToMove', playersToMove);
         // Compute if the movement is possible, if not we abort all movements
         if (g.Game.computeMovementObstruction(playersToMove[playersToMove.length - 1].player, newState)) {
           // No movements so the player stays in the same place
@@ -103,18 +114,23 @@ g.Game = {
           // TODO compute holes
         }
       }
-      let originalPlayer = playersToMove[0];
-      // TODO handle map laser, only for the moving player which is the first in the array
-      // TODO handle shooting
-      // TODO add postActions
-      processedActions.push({ movements: playersToMove });
+      console.log('src/shared/Game.js:51:18:playersToMove.length', playersToMove.length);
       for (let pl of playersToMove) {
         players[pl.position] = pl.player;
       }
+      let postActions = [];
+      let originalPlayer = players[position];
+      if (laserAction = g.Game.computeLasers(originalPlayer, players, newState)) {
+        //players[laserAction.oposition] = g.Player.decreaseHealth(laserAction.oplayer)
+        postActions.push(laserAction);
+      }
+      // TODO handle shooting
+      // TODO add postActions
+      processedActions.push({ movements: playersToMove, postActions: postActions });
     }
     return { state: newState, actions: processedActions };
   },
-  computePlayerCollision(players, player, direction) {
+  computePlayerCollision(player, players, direction) {
     for (let i = 0; i < players.length; i++) {
       if (g.Player.collide(player, players[i])) {
         return { position: i, player: g.Player.move(players[i], direction) };
@@ -128,17 +144,33 @@ g.Game = {
     if (c.x < 0 || c.y < 0 || c.x > game.sx || c.y > game.sy) {
       return true;
     }
+  },
+  computeLasers(player, players, state) {
+    var playerProjection = player;
+    // Laser blasts up to four
+    for (let i = 0; i < 4; i++) {
+      playerProjection = g.Player.handleAction(playerProjection, { subtype: 'ArrowUp' }).player;
+      // Nothing to shoot
+      if (g.Game.computeMovementObstruction(playerProjection, state)) return false;
+      for (let i = 0; i < players.length; i++) {
+        if (g.Player.collide(playerProjection, players[i])) {
+          console.log('src/shared/Game.js:90:22:\'colliding\',playerProjection,i,players[i]', 'colliding', playerProjection, i, players[i]);
+          return { type: 'laser', player: player, oplayer: players[i], oposition: i };
+        }
+      }
+    }
   }
 };
 g.Player = {
-  init: function (complex, playerType, orientation) {
+  init: function (complex, playerType, orientation, health) {
 
     var tile = g.PlayerTile.init(complex.x, complex.y, playerType, Complex.getTheta(orientation));
     return {
       t: tile,
       o: orientation,
       c: complex,
-      type: playerType
+      type: playerType,
+      h: health
     };
   },
   handleAction(player, action) {
@@ -148,21 +180,24 @@ g.Player = {
       return { player: g.Player.move(player, player.o), direction: player.o };
     }
     if (subtype === 'ArrowLeft') {
-      return { player: g.Player.init(player.c, player.type, Complex.multiply(player.o, { x: 0, y: -1 })) };
+      return { player: g.Player.init(player.c, player.type, Complex.multiply(player.o, { x: 0, y: -1 }), player.h) };
     }
     if (subtype === 'ArrowRight') {
       // Canvas coordinates grow from top to bottom so orientation is the other sign as usual
-      return { player: g.Player.init(player.c, player.type, Complex.multiply(player.o, { x: 0, y: 1 })) };
+      return { player: g.Player.init(player.c, player.type, Complex.multiply(player.o, { x: 0, y: 1 }), player.h) };
     }
     if (subtype === 'ArrowDown') {
       return { player: g.Player.move(player, Complex.multiply({ x: -1, y: 0 }, player.o)), direction: Complex.multiply({ x: -1, y: 0 }, player.o) };
     }
   },
   move(player, vector) {
-    return g.Player.init(Complex.add(player.c, vector), player.type, player.o);
+    return g.Player.init(Complex.add(player.c, vector), player.type, player.o, player.h);
   },
   collide(pl1, pl2) {
     return pl1.c.x === pl2.c.x && pl1.c.y === pl2.c.y;
+  },
+  decreaseHealth(player) {
+    return g.Player.init(player.c, player.type, player.o, player.h * 0.93);
   }
 
 };
@@ -208,36 +243,31 @@ g.Tile = {
     c.drawImage(floor, realCoordinates.x, realCoordinates.y, realCoordinates.w, realCoordinates.h);
   }
 };
-if (typeof window !== 'undefined') {(function (){g.Action = {
+if (typeof window !== 'undefined') {(function (){var socket;
+var getById = document.getElementById.bind(document);
+/*
+g.Action = {
   init: function (type, params) {
-    var action;
+    var action
     switch (type) {
       case 'playerMovement':
-        action = g.Action.player(params);
-        break;
+        action = g.Action.player(params)
+        break
+      case 'laser':
+
       default:
-        action = {};
-        break;
+        action = {}
+        break
     }
-    return Object.assign(action, { type: type });
+    return Object.assign(action, {type: type})
   },
   playerMovement: function (params) {
     return {
       subtype: params.type,
       player: params.player
-    };
+    }
   }
-};
-g.Actions = {
-  init: function () {
-    return {
-      players: []
-    };
-  },
-  types: {
-    player: 'player'
-  }
-};
+}*/
 Object.assign(g.Game, {
   // No need for this on the server
   getRealCoordinates: function (game, x, y) {
@@ -336,35 +366,7 @@ g.Input = {
     return newInput;
   }
 };
-g.Player = {
-  init: function (complex, playerType, orientation) {
 
-    var tile = g.PlayerTile.init(complex.x, complex.y, playerType, Complex.getTheta(orientation));
-    return {
-      t: tile,
-      o: orientation,
-      c: complex,
-      type: playerType
-    };
-  },
-  handleAction(player, action) {
-    var subtype = action.subtype;
-    if (subtype === 'ArrowUp') {
-      return g.Player.init(Complex.add(player.c, player.o), player.type, player.o);
-    }
-    if (subtype === 'ArrowLeft') {
-      return g.Player.init(player.c, player.type, Complex.multiply(player.o, { x: 0, y: -1 }));
-    }
-    if (subtype === 'ArrowRight') {
-      // Canvas coordinates grow from top to bottom so orientation is the other sign as usual
-      return g.Player.init(player.c, player.type, Complex.multiply(player.o, { x: 0, y: 1 }));
-    }
-    if (subtype === 'ArrowDown') {
-      return g.Player.init(Complex.add(player.c, Complex.multiply({ x: -1, y: 0 }, player.o)), player.type, player.o);
-    }
-  }
-
-};
 Object.assign(g.PlayerTile, {
   render: function (game, oldState, newState, time) {
     if (!newState) {
@@ -420,6 +422,7 @@ g.store = {
     g.store.oldState = oldState;
     g.store.state = state;
     g.store.render(oldState, state);
+    getById('health').textContent = '100%';
     g.store.acceptInput();
   },
   acceptInput() {
@@ -432,7 +435,7 @@ g.store = {
     var remainingTime = (g.store.inputTime - (new Date() - new Date(g.store.input.time))) / g.store.inputTime;
     if (remainingTime < 0) {
       document.removeEventListener('keydown', g.store.handleKeyDown);
-      console.log('src/client/Store.js:34:18:\'Remaining time is over\'', 'Remaining time is over');
+      console.log('src/client/Store.js:35:18:\'Remaining time is over\'', 'Remaining time is over');
       g.store.input = g.Input.fillInput(g.store.input);
       g.Input.render(g.store.input, -1);
       g.store.sendMovements(g.store.input.actions);
@@ -463,7 +466,7 @@ g.store = {
     g.store.render(state, newState);
   },
   sendMovements(actions) {
-    console.log('src/client/Store.js:63:16:\'Moving\',actions,{actions: g.store.input.actions}', 'Moving', actions, { actions: g.store.input.actions });
+    console.log('src/client/Store.js:64:16:\'Moving\',actions,{actions: g.store.input.actions}', 'Moving', actions, { actions: g.store.input.actions });
     socket.emit('move', actions);
   },
   render(oldState, newState, time) {
@@ -500,18 +503,29 @@ g.store = {
     }
     var newState = clone(state),
         remainingActions = newState.remainingActions,
-        /*postActions = newState.postActions,*/nextActions;
-    /*if (postActions.length) {
+        postActions = newState.postActions,
+        nextActions;
+    // Handle post actions from previous movement
+    if (postActions.length) {
+      for (let postAction of postActions) {
+        console.log('src/client/Store.js:100:20:postAction', postAction);
+        g.store.handleAction(newState, postAction);
+      }
+      newState.postActions = [];
+
       // TODO laser, holes, lives...
-    }*/
-    if (!remainingActions.length) {
-      g.store.acceptInput();
-      return;
-    }
-    // Prepare the actions
-    nextActions = remainingActions.shift();
-    for (let movement of nextActions.movements) {
-      Object.assign(newState.players[movement.position], movement.player);
+    } else {
+      // Handle actions
+      if (!remainingActions.length) {
+        g.store.acceptInput();
+        return;
+      }
+      // Prepare the actions
+      nextActions = remainingActions.shift();
+      for (let movement of nextActions.movements) {
+        Object.assign(newState.players[movement.position], movement.player);
+      }
+      newState.postActions = nextActions.postActions;
     }
     // TODO handle postactions
     g.store.oldState = state;
@@ -522,8 +536,10 @@ g.store = {
     //g.store.render(state, newState, g.store.time)
   },
   handleAction(state, action) {
-    if (action.type === g.Actions.types.player) {
-      state.players[action.player] = g.Player.handleAction(state.players[action.player], action);
+    if (action.type === g.Actions.types.laser) {
+      Object.assign(state.players[action.oposition], action.oplayer);
+      // TODO add laser to animation
+      return;
     }
   },
   handleKeyDown(e) {
