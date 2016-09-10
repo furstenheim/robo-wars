@@ -694,7 +694,7 @@ Game.prototype.acceptMove = function (actions, position) {
 };
 
 Game.prototype.move = function () {
-	var movements = this.movements;
+	var movements = this.movements.sort((m1, m2) => m2.remainingTime - m1.remainingTime);
 	console.log('src/server/server.js:72:13:\'Start moving\'', 'Start moving');
 	var stateAndActions = g.Game.computeMovements(this.state, movements);
 	this.state = stateAndActions.state;
@@ -723,18 +723,6 @@ function User(socket) {
 }
 
 /**
- * Set guess value
- * @param {number} guess
- */
-User.prototype.setGuess = function (guess) {
-	if (!this.opponent || guess <= GUESS_NO || guess > GUESS_SCISSORS) {
-		return false;
-	}
-	this.guess = guess;
-	return true;
-};
-
-/**
  * Start new game
  * @param {Game} game
  * @param {User} opponent
@@ -742,7 +730,7 @@ User.prototype.setGuess = function (guess) {
 User.prototype.start = function (game, position) {
 	this.game = game;
 	this.position = position;
-	console.log('src/server/server.js:125:13:\'Starting\'', 'Starting');
+	console.log('src/server/server.js:110:13:\'Starting\'', 'Starting');
 	this.socket.emit("start", JSON.stringify(Object.assign(game.state, { position: position })));
 };
 
@@ -794,7 +782,7 @@ module.exports = function (socket) {
 	findOpponent(user);
 
 	socket.on("disconnect", function () {
-		console.log('src/server/server.js:177:14:"Disconnected: " + socket.id', "Disconnected: " + socket.id);
+		console.log('src/server/server.js:162:14:"Disconnected: " + socket.id', "Disconnected: " + socket.id);
 		// TODO handle logic in game, specially moves in the middle
 		removeUser(user);
 		/*if (user.opponent) {
@@ -803,17 +791,10 @@ module.exports = function (socket) {
   }*/
 	});
 	socket.on("move", function (input) {
-		console.log('src/server/server.js:186:14:\'user move\'', 'user move');
+		console.log('src/server/server.js:171:14:\'user move\'', 'user move');
 		// TODO check input
 		user.move(input);
 	});
-	/*	socket.on("guess", function (guess) {
- 		console.log("Guess: " + socket.id);
- 		if (user.setGuess(guess) && user.game.ended()) {
- 			user.game.score();
- 			user.game.start();
- 		}
- 	});*/
 
-	console.log('src/server/server.js:198:13:"Connected: " + socket.id', "Connected: " + socket.id);
+	console.log('src/server/server.js:176:13:"Connected: " + socket.id', "Connected: " + socket.id);
 };})()}})()

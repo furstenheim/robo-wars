@@ -68,7 +68,7 @@ Game.prototype.acceptMove = function (actions, position) {
 }
 
 Game.prototype.move = function () {
-	var movements = this.movements
+	var movements = this.movements.sort((m1, m2) => m2.remainingTime - m1.remainingTime)
 	console.log('Start moving')
 	var stateAndActions = g.Game.computeMovements(this.state, movements)
 	this.state = stateAndActions.state
@@ -98,21 +98,6 @@ function User(socket) {
 	this.opponents = []
 }
 
-/**
- * Set guess value
- * @param {number} guess
- */
-User.prototype.setGuess = function (guess) {
-	if (
-		!this.opponent ||
-		guess <= GUESS_NO ||
-		guess > GUESS_SCISSORS
-	) {
-		return false;
-	}
-	this.guess = guess;
-	return true;
-};
 
 /**
  * Start new game
@@ -187,13 +172,6 @@ module.exports = function (socket) {
 		// TODO check input
 			user.move(input)
 	})
-/*	socket.on("guess", function (guess) {
-		console.log("Guess: " + socket.id);
-		if (user.setGuess(guess) && user.game.ended()) {
-			user.game.score();
-			user.game.start();
-		}
-	});*/
 
 	console.log("Connected: " + socket.id);
 };
