@@ -61,8 +61,8 @@ g.Game = {
         type,
         tiles = [],
         players = [],
-        distorsionsx = [0, 1 / 2, 0.99, 1 / 2],
-        distorsionsy = [1 / 2, 0, 1 / 2, 0.99],
+        distorsionsx = [0, 0.1, 0.99, 1 / 2],
+        distorsionsy = [1 / 2, 0.55, 1 / 2, 0.99] /*distorsionsx = [0, 1/2, 0.99, 1/2], distorsionsy = [ 1/2, 0, 1/2, 0.99]*/,
         distorsionst = [[1, 0], [0, 1], [-1, 0], [0, -1]];
     for (i = 0; i < game.np; i++) {
       players.push(g.Player.init(Complex(~~(distorsionsx[i] * game.sx), ~~(distorsionsy[i] * game.sy)), 'player', Complex(distorsionst[i])));
@@ -371,9 +371,7 @@ Object.assign(g.PlayerTile, {
       return;
     }
     var finalCoordinates = g.Game.getRealCoordinates(game, newState.x, newState.y);
-    var newX;
-    var newY;
-    var theta;
+    var newX, newY, theta, oldT;
     time = Math.min(Math.max(time, 0), g.store.movement) / g.store.movement;
     if (!oldState) {
       newX = finalCoordinates.x;
@@ -383,7 +381,9 @@ Object.assign(g.PlayerTile, {
       var initialCoordinates = g.Game.getRealCoordinates(game, oldState.x, oldState.y);
       newX = (1 - time) * initialCoordinates.x + time * finalCoordinates.x;
       newY = (1 - time) * initialCoordinates.y + time * finalCoordinates.y;
-      theta = (1 - time) * oldState.t + time * newState.t;
+      oldT = Math.abs(oldState.t - newState.t) < 2 * P ? oldState.t : Math.abs(oldState.t - 4 * P - newState.t) < Math.abs(oldState.t + 4 * P - newState.t) ? oldState.t - 4 * P : oldState.t + 4 * P;
+      //if (oldT !== oldState.t) debugger
+      theta = (1 - time) * oldT + time * newState.t;
     }
     var c = g.c;
     g.c.save();

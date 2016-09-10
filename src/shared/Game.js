@@ -11,7 +11,7 @@ g.Game = {
   },
   get np() {return 2},
   prepareGame: function (game) {
-    var i,j, types = ['floor', 'floor'], type, tiles=[], players=[], distorsionsx = [0, 1/2, 0.99, 1/2], distorsionsy = [ 1/2, 0, 1/2, 0.99], distorsionst = [[1, 0], [0,1], [-1, 0], [0, -1]]
+    var i,j, types = ['floor', 'floor'], type, tiles=[], players=[],distorsionsx = [0, 0.1, 0.99, 1/2], distorsionsy = [ 1/2, 0.55, 1/2, 0.99] /*distorsionsx = [0, 1/2, 0.99, 1/2], distorsionsy = [ 1/2, 0, 1/2, 0.99]*/, distorsionst = [[1, 0], [0,1], [-1, 0], [0, -1]]
     for (i=0; i<game.np; i++) {
       players.push(g.Player.init(Complex(~~ (distorsionsx[i] * game.sx), ~~ (distorsionsy[i] * game.sy)), 'player', Complex(distorsionst[i])))
     }
