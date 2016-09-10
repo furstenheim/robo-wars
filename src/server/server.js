@@ -61,6 +61,7 @@ Game.prototype.acceptMove = function (actions, position) {
 		this.movements.push(Object.assign({position: position}, action))
 	}
 	if (this.played === this.users.length) {
+		this.played = 0
 		console.log(this.movements)
 		this.move()
 	}
@@ -71,6 +72,7 @@ Game.prototype.move = function () {
 	console.log('Start moving')
 	var stateAndActions = g.Game.computeMovements(this.state, movements)
 	this.state = stateAndActions.state
+	this.movements = []
 	for (let user of this.users) {
 		console.log('sendActions')
 		user.sendActions(stateAndActions.actions)
@@ -181,6 +183,7 @@ module.exports = function (socket) {
 		}*/
 	});
 	socket.on("move", function (input) {
+		console.log('user move')
 		// TODO check input
 			user.move(input)
 	})

@@ -505,6 +505,7 @@ g.store = {
       // TODO laser, holes, lives...
     }*/
     if (!remainingActions.length) {
+      g.store.acceptInput();
       return;
     }
     // Prepare the actions
@@ -532,7 +533,7 @@ g.store = {
         remainingTime = (g.store.inputTime - (new Date() - new Date(g.store.input.time))) / g.store.inputTime;
     if (MOVEMENTS.indexOf(code) !== -1) {
       // TOOD pass health
-      g.store.input = g.Input.acceptAction(input, code, 0.8, remainingTime);
+      g.store.input = g.Input.acceptAction(input, code, 1, remainingTime);
     }
   }
 };
@@ -686,18 +687,20 @@ Game.prototype.acceptMove = function (actions, position) {
 		this.movements.push(Object.assign({ position: position }, action));
 	}
 	if (this.played === this.users.length) {
-		console.log('src/server/server.js:64:14:this.movements', this.movements);
+		this.played = 0;
+		console.log('src/server/server.js:65:14:this.movements', this.movements);
 		this.move();
 	}
 };
 
 Game.prototype.move = function () {
 	var movements = this.movements;
-	console.log('src/server/server.js:71:13:\'Start moving\'', 'Start moving');
+	console.log('src/server/server.js:72:13:\'Start moving\'', 'Start moving');
 	var stateAndActions = g.Game.computeMovements(this.state, movements);
 	this.state = stateAndActions.state;
+	this.movements = [];
 	for (let user of this.users) {
-		console.log('src/server/server.js:75:14:\'sendActions\'', 'sendActions');
+		console.log('src/server/server.js:77:14:\'sendActions\'', 'sendActions');
 		user.sendActions(stateAndActions.actions);
 	}
 };
@@ -739,7 +742,7 @@ User.prototype.setGuess = function (guess) {
 User.prototype.start = function (game, position) {
 	this.game = game;
 	this.position = position;
-	console.log('src/server/server.js:123:13:\'Starting\'', 'Starting');
+	console.log('src/server/server.js:125:13:\'Starting\'', 'Starting');
 	this.socket.emit("start", JSON.stringify(Object.assign(game.state, { position: position })));
 };
 
@@ -791,7 +794,7 @@ module.exports = function (socket) {
 	findOpponent(user);
 
 	socket.on("disconnect", function () {
-		console.log('src/server/server.js:175:14:"Disconnected: " + socket.id', "Disconnected: " + socket.id);
+		console.log('src/server/server.js:177:14:"Disconnected: " + socket.id', "Disconnected: " + socket.id);
 		// TODO handle logic in game, specially moves in the middle
 		removeUser(user);
 		/*if (user.opponent) {
@@ -800,6 +803,7 @@ module.exports = function (socket) {
   }*/
 	});
 	socket.on("move", function (input) {
+		console.log('src/server/server.js:186:14:\'user move\'', 'user move');
 		// TODO check input
 		user.move(input);
 	});
@@ -811,5 +815,5 @@ module.exports = function (socket) {
  		}
  	});*/
 
-	console.log('src/server/server.js:195:13:"Connected: " + socket.id', "Connected: " + socket.id);
+	console.log('src/server/server.js:198:13:"Connected: " + socket.id', "Connected: " + socket.id);
 };})()}})()
