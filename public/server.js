@@ -126,8 +126,7 @@ g.Game = {
       let originalPlayer = players[position];
       if (laserAction = g.Game.computeLasers(originalPlayer, players, newState)) {
         let weakenedPlayer = g.Player.decreaseHealth(laserAction.oplayer);
-        let dieNow = false;
-        if (players[laserAction.oposition].s === g.Player.statuses.alive && weakenedPlayer === g.Player.statuses.dead) dieNow = true;
+        let dieNow = players[laserAction.oposition].s === g.Player.statuses.alive && weakenedPlayer.s === g.Player.statuses.dead;
         players[laserAction.oposition] = weakenedPlayer;
         postActions.push(Object.assign(laserAction, { oplayer: weakenedPlayer }));
         if (dieNow) {
@@ -174,7 +173,7 @@ g.Game = {
       if (g.Game.computeMovementObstruction(playerProjection, state)) return false;
       for (let i = 0; i < players.length; i++) {
         if (g.Player.collide(playerProjection, players[i])) {
-          console.log('src/shared/Game.js:109:22:\'colliding\',playerProjection,i,players[i]', 'colliding', playerProjection, i, players[i]);
+          console.log('src/shared/Game.js:108:22:\'colliding\',playerProjection,i,players[i]', 'colliding', playerProjection, i, players[i]);
           return { type: 'laser', player: player, oplayer: players[i], oposition: i };
         }
       }

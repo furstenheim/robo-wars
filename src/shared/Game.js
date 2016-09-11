@@ -58,8 +58,7 @@ g.Game = {
       let originalPlayer = players[position]
       if (laserAction =  g.Game.computeLasers(originalPlayer, players, newState)) {
         let weakenedPlayer = g.Player.decreaseHealth(laserAction.oplayer)
-        let dieNow = false
-        if (players[laserAction.oposition].s === g.Player.statuses.alive && weakenedPlayer === g.Player.statuses.dead) dieNow = true
+        let dieNow = (players[laserAction.oposition].s === g.Player.statuses.alive && weakenedPlayer.s === g.Player.statuses.dead)
         players[laserAction.oposition] = weakenedPlayer
         postActions.push(Object.assign(laserAction, {oplayer: weakenedPlayer}))
         if (dieNow) {
