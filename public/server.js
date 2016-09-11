@@ -71,9 +71,9 @@ g.Game = {
     };
   },
   get np() {
-    return 2;
+    return 4;
   },
-  prepareGame: function (game) {
+  prepareGame: function (game, np) {
     var i,
         j,
         types = ['floor', 'wall'],
@@ -85,7 +85,7 @@ g.Game = {
         distorsionst = [[1, 0], [0, 1], [-1, 0], [0, -1]],
         xs = [],
         ys = [];
-    for (i = 0; i < game.np; i++) {
+    for (i = 0; i < np; i++) {
       let x = ~~(distorsionsx[i] * game.sx);
       let y = ~~(distorsionsy[i] * game.sy);
       xs.push(x);
@@ -679,6 +679,8 @@ g.Tiles = {
   wall: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAwAAAAMCAIAAADZF8uwAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH4AkLChMusC+d2QAAABl0RVh0Q29tbWVudABDcmVhdGVkIHdpdGggR0lNUFeBDhcAAABLSURBVBjTY7S1tWUgBJjQ+GqqqjgVweVu3b6NqY2RHOvQDIYwmLA6BW4phMEEUQEXRTMDYRKyY9HMQHcTXCtmKBDtO2TrsRpGlEkAsuEcUVru56YAAAAASUVORK5CYII=',
   player0: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAABmJLR0QA/wAAAAAzJ3zzAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH4AkLCykj6vVVKgAAABl0RVh0Q29tbWVudABDcmVhdGVkIHdpdGggR0lNUFeBDhcAAACrSURBVEjHY8yOD2WgJWBioDEY+hawwBhTF67+T6lh2fGhjMMviBjRk+mNj1v+MzAwMGio/GS4cYcdqyZkOQ1+H0ayfIBuuIbKT5xyZFmAbCA+35BtAbKB5BqOkkzx+QTZAhh/74bvDAwMDAx7GRDJm6xkiu56Un3DQqzL0YFzACflqQgW0RoqP1EinWoZDeaDG3fYMeKBpjmZlHiguLCjOBUNvcJutMqkuwUAklJFrPsWPH0AAAAASUVORK5CYII=',
   player1: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAABmJLR0QAawBfAFVrQDHVAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH4AkLCyYCIQRZuwAAABl0RVh0Q29tbWVudABDcmVhdGVkIHdpdGggR0lNUFeBDhcAAACwSURBVEjHY7S3tWGgJWBioDFgQWL/x6OOEYsYUerp6gOCQEdJEs6+cu85yRYwMjAwMHz69PE/ruA4duEjToP4+PgZCfrg06ePZAfFp08fGawMNDB8yEKqQciG4Il0+kUyVS2YsnA1w5SFqwcuo1EMcuJDR4OIuCBCzuWDzwfHLtzAlQEZaRpExy7cYODj4x/gCgebC6AFGSOW0vM/MWURUUGEy+JBVyczkqiXcVD4AAAU0DA4nLYhlQAAAABJRU5ErkJggg==',
+  player2: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAABmJLR0QA/wD/AP+gvaeTAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH4AkLECYfUnF58wAAABl0RVh0Q29tbWVudABDcmVhdGVkIHdpdGggR0lNUFeBDhcAAADFSURBVEjHzVXRFcMgCARed8oiLpGJuoSLdJYMQX/SPo2HQmPa8p4/etwpILCqLkT0oIuMVdUHZH4DVZWnCJSklo3EoICH2CskM8h7ftULLFDOudlLKbleIqObIfLevhkidPsRCTo/8kj05ibuvi8rB6XykRzFu8FsO2at83A7UzmVrXWYXiJCF9s8ASMHEu0t0V8NkxypIlQEpYB4nT7FSa9ZjZzRebhVWCLeFzbt+syfQFGQ6ACJzoPfTLSvzeT/ahWGPQEEb4LKUITSfgAAAABJRU5ErkJggg==',
+  player3: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAABmJLR0QA/wD/AP+gvaeTAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH4AkLEC0oCTgFNwAAABl0RVh0Q29tbWVudABDcmVhdGVkIHdpdGggR0lNUFeBDhcAAADnSURBVEjH7ZUxEoIwEEX/RsYTeAUbr2KjlZWdx7KjogIKOQpNruAFLGQtIBgQFmLI2LgzzBaQ/2aX3R9iZoQMhcARHBD5HCaitr/MTN4AW7AX69Ez0k8+HvajL7O8UACqqQo+AJLoACQCQABWzPyYBLiIm0izG4ltNQBbPL1f39DNxQsyOKZGdEg8iXWdS90+UuXOe3A6b+u86+ZJgF2maZHdqkUXTep7Euu2CiermDtBRjwpdSfPXrSlR9Xb7LK8ICIKA2jsQrHgN8p1M3vfVQCeggnKZjfXTceMzhnwzX1A/zv554AXJGZ3EDgQafoAAAAASUVORK5CYII=',
   arrow: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH4AkLCiA4sJBNuAAAABl0RVh0Q29tbWVudABDcmVhdGVkIHdpdGggR0lNUFeBDhcAAABXSURBVDjLxZNBDoBACAPb/f+fZw+6hsNqBBLl3iGlxYA6M9ScdwAb2dQB4AtUtnADqd0gQIxUjwHcA3wX46OFTBNjAmcqo7o5b2FtD+JclTfiowd/f+METjMlD4iLdKcAAAAASUVORK5CYII='
 };
 /* init variables here */
@@ -768,15 +770,18 @@ function findOpponent(user) {
 		// This actually does not work for g.Game.np === 1. But who wants to play alone?
 		if (user !== loggedUser &&
 		// loggedUser counts for the total number
-		loggedUser.opponents.length < g.Game.np - 1) {
+		loggedUser.opponents.length < g.Game.np - 1 && !user.started) {
 			for (let opponent of loggedUser.opponents) {
 				user.opponents.push(opponent);
 				opponent.opponents.push(user);
+				opponent.removeCount();
 			}
 			loggedUser.opponents.push(user);
 			user.opponents.push(loggedUser);
 			if (loggedUser.opponents.length === g.Game.np - 1) {
 				new Game([loggedUser].concat(loggedUser.opponents)).start();
+			} else {
+				loggedUser.startCount();
 			}
 			return;
 		}
@@ -802,7 +807,7 @@ Game.prototype.start = function () {
 	var game = g.Game.init(),
 	    users = this.users;
 	// TODO get type of player from users
-	this.state = g.Game.prepareGame(game);
+	this.state = g.Game.prepareGame(game, this.users.length);
 	this.alive = this.users.length;
 	this.played = 0;
 	this.movements = [];
@@ -818,14 +823,14 @@ Game.prototype.acceptMove = function (actions, position) {
 	}
 	if (this.played === this.alive) {
 		this.played = 0;
-		console.log('src/server/server.js:67:14:this.movements', this.movements);
+		console.log('src/server/server.js:72:14:this.movements', this.movements);
 		this.move();
 	}
 };
 
 Game.prototype.move = function () {
 	var movements = this.movements.sort((m1, m2) => m2.remainingTime - m1.remainingTime);
-	console.log('src/server/server.js:74:13:\'Start moving\'', 'Start moving');
+	console.log('src/server/server.js:79:13:\'Start moving\'', 'Start moving');
 	var stateAndActions = g.Game.computeMovements(this.state, movements);
 	this.state = stateAndActions.state;
 	this.movements = [];
@@ -834,7 +839,7 @@ Game.prototype.move = function () {
 			this.alive = this.alive - 1;
 			user.die();
 		}
-		console.log('src/server/server.js:83:14:\'sendActions\'', 'sendActions');
+		console.log('src/server/server.js:88:14:\'sendActions\'', 'sendActions');
 		user.sendActions(stateAndActions.actions);
 	}
 };
@@ -847,10 +852,6 @@ Game.prototype.ended = function () {
 	return this.user1.guess !== GUESS_NO && this.user2.guess !== GUESS_NO;
 };
 
-/**
- * User session class
- * @param {Socket} socket
- */
 function User(socket) {
 	this.socket = socket;
 	this.game = null;
@@ -858,15 +859,11 @@ function User(socket) {
 	this.opponents = [];
 }
 
-/**
- * Start new game
- * @param {Game} game
- * @param {User} opponent
- */
 User.prototype.start = function (game, position) {
 	this.game = game;
+	this.started = true;
 	this.position = position;
-	console.log('src/server/server.js:119:13:\'Starting\'', 'Starting');
+	console.log('src/server/server.js:117:13:\'Starting\'', 'Starting');
 	this.socket.emit("start", JSON.stringify(Object.assign(game.state, { position: position })));
 };
 
@@ -878,39 +875,50 @@ User.prototype.move = function (actions) {
 	if (this.alive) this.game.acceptMove(actions, this.position);
 };
 
+// In case there are not a lot of users we take what we have
+User.prototype.startCount = function () {
+	var user = this;
+	this.timeout = setTimeout(function () {
+		console.log('src/server/server.js:133:14:\'start game without enough players\'', 'start game without enough players');
+		new Game([user].concat(user.opponents)).start();
+	}, 30000);
+};
+User.prototype.removeCount = function () {
+	clearTimeout(this.timeout);
+};
 User.prototype.sendActions = function (actions) {
 	this.socket.emit('actions', actions);
 };
-/**
- * Terminate game
- */
-User.prototype.end = function () {
-	this.game = null;
-	this.opponent = null;
-	this.guess = GUESS_NO;
-	this.socket.emit("end");
-};
+// /**
+//  * Terminate game
+//  */
+// User.prototype.end = function () {
+// 	this.game = null;
+// 	this.opponent = null;
+// 	this.guess = GUESS_NO;
+// 	this.socket.emit("end");
+// };
 
-/**
- * Trigger win event
- */
-User.prototype.win = function () {
-	this.socket.emit("win", this.opponent.guess);
-};
-
-/**
- * Trigger lose event
- */
-User.prototype.lose = function () {
-	this.socket.emit("lose", this.opponent.guess);
-};
-
-/**
- * Trigger draw event
- */
-User.prototype.draw = function () {
-	this.socket.emit("draw", this.opponent.guess);
-};
+// /**
+//  * Trigger win event
+//  */
+// User.prototype.win = function () {
+// 	this.socket.emit("win", this.opponent.guess);
+// };
+//
+// /**
+//  * Trigger lose event
+//  */
+// User.prototype.lose = function () {
+// 	this.socket.emit("lose", this.opponent.guess);
+// };
+//
+// /**
+//  * Trigger draw event
+//  */
+// User.prototype.draw = function () {
+// 	this.socket.emit("draw", this.opponent.guess);
+// };
 
 /**
  * Socket.IO on connect event
@@ -922,7 +930,7 @@ module.exports = function (socket) {
 	findOpponent(user);
 
 	socket.on("disconnect", function () {
-		console.log('src/server/server.js:175:14:"Disconnected: " + socket.id', "Disconnected: " + socket.id);
+		console.log('src/server/server.js:184:14:"Disconnected: " + socket.id', "Disconnected: " + socket.id);
 		// TODO handle logic in game, specially moves in the middle
 		removeUser(user);
 		/*if (user.opponent) {
@@ -931,10 +939,10 @@ module.exports = function (socket) {
   }*/
 	});
 	socket.on("move", function (input) {
-		console.log('src/server/server.js:184:14:\'user move\'', 'user move');
+		console.log('src/server/server.js:193:14:\'user move\'', 'user move');
 		// TODO check input
 		user.move(input);
 	});
 
-	console.log('src/server/server.js:189:13:"Connected: " + socket.id', "Connected: " + socket.id);
+	console.log('src/server/server.js:198:13:"Connected: " + socket.id', "Connected: " + socket.id);
 };})()}})()

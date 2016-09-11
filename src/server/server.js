@@ -15,15 +15,20 @@ function findOpponent(user) {
 			user !== loggedUser &&
 			// loggedUser counts for the total number
 			loggedUser.opponents.length < g.Game.np - 1
+			&&
+			!user.started
 		) {
 			for(let opponent of loggedUser.opponents) {
 				user.opponents.push(opponent)
 				opponent.opponents.push(user)
+				opponent.removeCount()
 			}
 			loggedUser.opponents.push(user)
 			user.opponents.push(loggedUser)
 			if (loggedUser.opponents.length === g.Game.np -1) {
 				new Game([loggedUser].concat(loggedUser.opponents)).start()
+			} else {
+				loggedUser.startCount()
 			}
 			return
 		}
@@ -48,7 +53,7 @@ function Game(users) {
 Game.prototype.start = function () {
 	var game = g.Game.init(), users = this.users
 	// TODO get type of player from users
-	this.state = g.Game.prepareGame(game)
+	this.state = g.Game.prepareGame(game, this.users.length)
 	this.alive = this.users.length
 	this.played = 0
 	this.movements = []
@@ -96,10 +101,7 @@ Game.prototype.ended = function () {
 }
 
 
-/**
- * User session class
- * @param {Socket} socket
- */
+
 function User(socket) {
 	this.socket = socket
 	this.game = null
@@ -108,13 +110,9 @@ function User(socket) {
 }
 
 
-/**
- * Start new game
- * @param {Game} game
- * @param {User} opponent
- */
 User.prototype.start = function (game, position) {
 	this.game = game
+	this.started = true
 	this.position = position
 	console.log('Starting')
 	this.socket.emit("start", JSON.stringify(Object.assign(game.state, {position: position})))
@@ -128,39 +126,50 @@ User.prototype.move = function (actions) {
 	if (this.alive) this.game.acceptMove(actions, this.position)
 }
 
+// In case there are not a lot of users we take what we have
+User.prototype.startCount = function () {
+	var user = this
+	this.timeout = setTimeout(function () {
+		console.log('start game without enough players')
+		new Game([user].concat(user.opponents)).start()
+	}, 30000)
+}
+User.prototype.removeCount = function () {
+	clearTimeout(this.timeout)
+}
 User.prototype.sendActions = function (actions) {
 	this.socket.emit('actions', actions)
 }
-/**
- * Terminate game
- */
-User.prototype.end = function () {
-	this.game = null;
-	this.opponent = null;
-	this.guess = GUESS_NO;
-	this.socket.emit("end");
-};
+// /**
+//  * Terminate game
+//  */
+// User.prototype.end = function () {
+// 	this.game = null;
+// 	this.opponent = null;
+// 	this.guess = GUESS_NO;
+// 	this.socket.emit("end");
+// };
 
-/**
- * Trigger win event
- */
-User.prototype.win = function () {
-	this.socket.emit("win", this.opponent.guess);
-};
-
-/**
- * Trigger lose event
- */
-User.prototype.lose = function () {
-	this.socket.emit("lose", this.opponent.guess);
-};
-
-/**
- * Trigger draw event
- */
-User.prototype.draw = function () {
-	this.socket.emit("draw", this.opponent.guess);
-};
+// /**
+//  * Trigger win event
+//  */
+// User.prototype.win = function () {
+// 	this.socket.emit("win", this.opponent.guess);
+// };
+//
+// /**
+//  * Trigger lose event
+//  */
+// User.prototype.lose = function () {
+// 	this.socket.emit("lose", this.opponent.guess);
+// };
+//
+// /**
+//  * Trigger draw event
+//  */
+// User.prototype.draw = function () {
+// 	this.socket.emit("draw", this.opponent.guess);
+// };
 
 /**
  * Socket.IO on connect event
