@@ -125,13 +125,17 @@ g.store = {
   },
   handleAction (state, action) {
     if (action.type === g.Actions.types.laser) {
-      let dieNow = false
-      if (state.players[action.oposition].s === g.Player.statuses.alive && action.oplayer.s === g.Player.statuses.dead) dieNow = true
+
       Object.assign(state.players[action.oposition], action.oplayer)
       g.store.renderHealth(state.players)
-      if (dieNow) g.store.handleDeath(action.oposition, state)
-      // TODO add laser to animation
       return
+    }
+    if (action.type === g.Actions.types.death) {
+      g.store.handleDeath(action.oposition, state)
+      return
+    }
+    if (action.type === g.Actions.types.win) {
+      g.store.handleWin(action.position, state)
     }
   },
   handleKeyDown (e) {
@@ -155,6 +159,10 @@ g.store = {
     } else {
       console.log(`Player ${position} is dead`)
     }
-
+  },
+  handleWin (position, state) {
+    if (position === state.position) {
+      console.log('You won')
+    }
   }
 }

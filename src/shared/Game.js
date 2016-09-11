@@ -57,8 +57,25 @@ g.Game = {
       let postActions = []
       let originalPlayer = players[position]
       if (laserAction =  g.Game.computeLasers(originalPlayer, players, newState)) {
-        players[laserAction.oposition] = g.Player.decreaseHealth(laserAction.oplayer)
+        let weakenedPlayer = g.Player.decreaseHealth(laserAction.oplayer)
+        let dieNow = false
+        if (players[laserAction.oposition].s === g.Player.statuses.alive && weakenedPlayer === g.Player.statuses.dead) dieNow = true
+        players[laserAction.oposition] = weakenedPlayer
         postActions.push(laserAction)
+        if (dieNow) {
+          postActions.push({type: g.Actions.death, oposition: laserAction.oposition})
+          let numberOfDeath = 0
+          let alivePlayer = -1
+          for (let i=0; i < players.length; i++) {
+            if (players[i].s === g.Player.statuses.dead) {
+              numberOfDeath++
+            } else {
+              alivePlayer = i
+            }
+          }
+          if (numberOfDeath = players.length -1) postActions.push({type: g.Actions.types.win, position: alivePlayer})
+        }
+
       }
       // TODO handle shooting
       // TODO add postActions
