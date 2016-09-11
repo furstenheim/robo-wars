@@ -11,13 +11,22 @@ g.Game = {
   },
   get np() {return 2},
   prepareGame: function (game) {
-    var i,j, types = ['floor', 'floor'], type, tiles=[], players=[],distorsionsx = [0, 0.1, 0.99, 1/2], distorsionsy = [ 1/2, 0.55, 1/2, 0.99] /*distorsionsx = [0, 1/2, 0.99, 1/2], distorsionsy = [ 1/2, 0, 1/2, 0.99]*/, distorsionst = [[1, 0], [0,1], [-1, 0], [0, -1]]
+    var i,j, types = ['floor', 'wall'], type, tiles=[], players=[],distorsionsx = [0, 1/2, 0.99, 1/2], distorsionsy = [ 1/2, 0, 1/2, 0.99], distorsionst = [[1, 0], [0,1], [-1, 0], [0, -1]], xs = [], ys = []
     for (i=0; i<game.np; i++) {
-      players.push(g.Player.init(Complex(~~ (distorsionsx[i] * game.sx), ~~ (distorsionsy[i] * game.sy)), 'player' + i, Complex(distorsionst[i]), 1, g.Player.statuses.alive))
+      let x = ~~ (distorsionsx[i] * game.sx)
+      let y =  ~~ (distorsionsy[i] * game.sy)
+      xs.push(x)
+      ys.push(y)
+      players.push(g.Player.init(Complex(x,y), 'player' + i, Complex(distorsionst[i]), 1, g.Player.statuses.alive))
     }
     for (i=0; i < game.sx; i++) {
       for (j =0; j < game.sy; j++) {
-        type = types[Math.floor(Math.random() * 2)]
+        type = types[Math.random() < 0.85 ? 0 : 1]
+        for (let k = 0; k < xs.length; k++) {
+          if (Math.abs(i - xs[k]) + Math.abs(j - ys[k]) < 2.5) {
+            type = types[0]
+          }
+        }
         tiles.push(g.Tile.init(i, j, type))
       }
     }
@@ -93,6 +102,9 @@ g.Game = {
     // TODO check for blocks
     var c = player.c, game = state.game
     if (c.x < 0 || c.y < 0 || c.x > game.sx || c.y > game.sy) {
+      return true
+    }
+    if (state.tiles[game.sy * c.x + c.y].type === 'wall') {
       return true
     }
   },
