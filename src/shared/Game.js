@@ -61,7 +61,7 @@ g.Game = {
         let dieNow = false
         if (players[laserAction.oposition].s === g.Player.statuses.alive && weakenedPlayer === g.Player.statuses.dead) dieNow = true
         players[laserAction.oposition] = weakenedPlayer
-        postActions.push(laserAction)
+        postActions.push(Object.assign(laserAction, {oplayer: weakenedPlayer}))
         if (dieNow) {
           postActions.push({type: g.Actions.death, oposition: laserAction.oposition})
           let numberOfDeath = 0

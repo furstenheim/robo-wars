@@ -18,7 +18,9 @@ g.Actions = {
   },
   types: {
     player: 'player',
-    laser: 'laser'
+    laser: 'laser',
+    death: 'death',
+    win: 'win'
   }
 };
 // Use complex to rotate, move on the plane
@@ -123,9 +125,24 @@ g.Game = {
       let postActions = [];
       let originalPlayer = players[position];
       if (laserAction = g.Game.computeLasers(originalPlayer, players, newState)) {
-        let weakendPlayer;
-        players[laserAction.oposition] = g.Player.decreaseHealth(laserAction.oplayer);
-        postActions.push(laserAction);
+        let weakenedPlayer = g.Player.decreaseHealth(laserAction.oplayer);
+        let dieNow = false;
+        if (players[laserAction.oposition].s === g.Player.statuses.alive && weakenedPlayer === g.Player.statuses.dead) dieNow = true;
+        players[laserAction.oposition] = weakenedPlayer;
+        postActions.push(Object.assign(laserAction, { oplayer: weakenedPlayer }));
+        if (dieNow) {
+          postActions.push({ type: g.Actions.death, oposition: laserAction.oposition });
+          let numberOfDeath = 0;
+          let alivePlayer = -1;
+          for (let i = 0; i < players.length; i++) {
+            if (players[i].s === g.Player.statuses.dead) {
+              numberOfDeath++;
+            } else {
+              alivePlayer = i;
+            }
+          }
+          if (numberOfDeath = players.length - 1) postActions.push({ type: g.Actions.types.win, position: alivePlayer });
+        }
       }
       // TODO handle shooting
       // TODO add postActions
@@ -157,7 +174,7 @@ g.Game = {
       if (g.Game.computeMovementObstruction(playerProjection, state)) return false;
       for (let i = 0; i < players.length; i++) {
         if (g.Player.collide(playerProjection, players[i])) {
-          console.log('src/shared/Game.js:93:22:\'colliding\',playerProjection,i,players[i]', 'colliding', playerProjection, i, players[i]);
+          console.log('src/shared/Game.js:109:22:\'colliding\',playerProjection,i,players[i]', 'colliding', playerProjection, i, players[i]);
           return { type: 'laser', player: player, oplayer: players[i], oposition: i };
         }
       }
@@ -542,13 +559,18 @@ g.store = {
   },
   handleAction(state, action) {
     if (action.type === g.Actions.types.laser) {
-      let dieNow = false;
-      if (state.players[action.oposition].s === g.Player.statuses.alive && action.oplayer.s === g.Player.statuses.dead) dieNow = true;
+
       Object.assign(state.players[action.oposition], action.oplayer);
+      console.log('src/client/Store.js:130:18:action.oplayer.h,state.players[action.oposition].h', action.oplayer.h, state.players[action.oposition].h);
       g.store.renderHealth(state.players);
-      if (dieNow) g.store.handleDeath(action.oposition, state);
-      // TODO add laser to animation
       return;
+    }
+    if (action.type === g.Actions.types.death) {
+      g.store.handleDeath(action.oposition, state);
+      return;
+    }
+    if (action.type === g.Actions.types.win) {
+      g.store.handleWin(action.position, state);
     }
   },
   handleKeyDown(e) {
@@ -572,9 +594,14 @@ g.store = {
   },
   handleDeath(position, state) {
     if (position === state.position) {
-      console.log('src/client/Store.js:154:18:\'You are dead\'', 'You are dead');
+      console.log('src/client/Store.js:159:18:\'You are dead\'', 'You are dead');
     } else {
-      console.log('src/client/Store.js:156:18:`Player ${position} is dead`', `Player ${ position } is dead`);
+      console.log('src/client/Store.js:161:18:`Player ${position} is dead`', `Player ${ position } is dead`);
+    }
+  },
+  handleWin(position, state) {
+    if (position === state.position) {
+      console.log('src/client/Store.js:166:18:\'You won\'', 'You won');
     }
   }
 };

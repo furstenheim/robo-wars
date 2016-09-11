@@ -127,6 +127,7 @@ g.store = {
     if (action.type === g.Actions.types.laser) {
 
       Object.assign(state.players[action.oposition], action.oplayer)
+      console.log(action.oplayer.h, state.players[action.oposition].h)
       g.store.renderHealth(state.players)
       return
     }
