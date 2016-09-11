@@ -13,7 +13,7 @@ g.Game = {
   prepareGame: function (game) {
     var i,j, types = ['floor', 'floor'], type, tiles=[], players=[],distorsionsx = [0, 0.1, 0.99, 1/2], distorsionsy = [ 1/2, 0.55, 1/2, 0.99] /*distorsionsx = [0, 1/2, 0.99, 1/2], distorsionsy = [ 1/2, 0, 1/2, 0.99]*/, distorsionst = [[1, 0], [0,1], [-1, 0], [0, -1]]
     for (i=0; i<game.np; i++) {
-      players.push(g.Player.init(Complex(~~ (distorsionsx[i] * game.sx), ~~ (distorsionsy[i] * game.sy)), 'player', Complex(distorsionst[i]), 1))
+      players.push(g.Player.init(Complex(~~ (distorsionsx[i] * game.sx), ~~ (distorsionsy[i] * game.sy)), 'player', Complex(distorsionst[i]), 1, g.Player.statuses.alive))
     }
     for (i=0; i < game.sx; i++) {
       for (j =0; j < game.sy; j++) {
@@ -30,6 +30,8 @@ g.Game = {
       console.log('computeMovements', movement)
       // ohh my old node without json destructuring
       let position = movement.position
+      // dead are not allowed to move
+      if (players[position].s === g.Player.statuses.dead) continue
       let result = g.Player.handleAction(players[position], movement)
       console.log('computeMovements', result)
       let playerMoved = {player: result.player, position: position}
@@ -55,7 +57,7 @@ g.Game = {
       let postActions = []
       let originalPlayer = players[position]
       if (laserAction =  g.Game.computeLasers(originalPlayer, players, newState)) {
-        //players[laserAction.oposition] = g.Player.decreaseHealth(laserAction.oplayer)
+        players[laserAction.oposition] = g.Player.decreaseHealth(laserAction.oplayer)
         postActions.push(laserAction)
       }
       // TODO handle shooting

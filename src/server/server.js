@@ -48,6 +48,7 @@ Game.prototype.start = function () {
 	var game = g.Game.init(), users = this.users
 	// TODO get type of player from users
 	this.state = g.Game.prepareGame(game)
+	this.alive = this.users.length
 	this.played = 0
 	this.movements = []
 	for (let i = 0; i<users.length; i++) {
@@ -60,7 +61,7 @@ Game.prototype.acceptMove = function (actions, position) {
 	for (let action of actions) {
 		this.movements.push(Object.assign({position: position}, action))
 	}
-	if (this.played === this.users.length) {
+	if (this.played === this.alive) {
 		this.played = 0
 		console.log(this.movements)
 		this.move()
@@ -74,6 +75,10 @@ Game.prototype.move = function () {
 	this.state = stateAndActions.state
 	this.movements = []
 	for (let user of this.users) {
+		if (user.alive && this.state.players[user.position].s === g.Player.statuses.dead) {
+			this.alive = this.alive -1
+			user.die()
+		}
 		console.log('sendActions')
 		user.sendActions(stateAndActions.actions)
 	}
@@ -95,6 +100,7 @@ Game.prototype.ended = function () {
 function User(socket) {
 	this.socket = socket
 	this.game = null
+	this.alive = true
 	this.opponents = []
 }
 
@@ -111,8 +117,12 @@ User.prototype.start = function (game, position) {
 	this.socket.emit("start", JSON.stringify(Object.assign(game.state, {position: position})))
 }
 
+User.prototype.die = function () {
+	this.alive = false
+	// TODO, maybe close connection
+}
 User.prototype.move = function (actions) {
-	this.game.acceptMove(actions, this.position)
+	if (this.alive) this.game.acceptMove(actions, this.position)
 }
 
 User.prototype.sendActions = function (actions) {

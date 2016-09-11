@@ -125,7 +125,11 @@ g.store = {
   },
   handleAction (state, action) {
     if (action.type === g.Actions.types.laser) {
+      let dieNow = false
+      if (state.players[action.oposition].s === g.Player.statuses.alive && action.oplayer.s === g.Player.statuses.dead) dieNow = true
       Object.assign(state.players[action.oposition], action.oplayer)
+      g.store.renderHealth(state.players)
+      if (dieNow) g.store.handleDeath(action.oposition, state)
       // TODO add laser to animation
       return
     }
@@ -136,5 +140,21 @@ g.store = {
       // TOOD pass health
       g.store.input = g.Input.acceptAction(input, code, 1, remainingTime)
     }
+  },
+  renderHealth (players) {
+    var health = [], player
+    for (let i = 0; i < players.length; i++) {
+      player = players[i]
+      health.push(`Player ${i} health: ${parseInt( 2*(Math.max(player.h, 0.5) - 0.5) * 100)} %`)
+    }
+    g.health.textContent = health.join(' ')
+  },
+  handleDeath (position, state) {
+    if (position === state.position) {
+      console.log('You are dead')
+    } else {
+      console.log(`Player ${position} is dead`)
+    }
+
   }
 }

@@ -76,7 +76,7 @@ g.Game = {
         distorsionsy = [1 / 2, 0.55, 1 / 2, 0.99] /*distorsionsx = [0, 1/2, 0.99, 1/2], distorsionsy = [ 1/2, 0, 1/2, 0.99]*/,
         distorsionst = [[1, 0], [0, 1], [-1, 0], [0, -1]];
     for (i = 0; i < game.np; i++) {
-      players.push(g.Player.init(Complex(~~(distorsionsx[i] * game.sx), ~~(distorsionsy[i] * game.sy)), 'player', Complex(distorsionst[i]), 1));
+      players.push(g.Player.init(Complex(~~(distorsionsx[i] * game.sx), ~~(distorsionsy[i] * game.sy)), 'player', Complex(distorsionst[i]), 1, g.Player.statuses.alive));
     }
     for (i = 0; i < game.sx; i++) {
       for (j = 0; j < game.sy; j++) {
@@ -96,8 +96,10 @@ g.Game = {
       console.log('src/shared/Game.js:30:18:\'computeMovements\',movement', 'computeMovements', movement);
       // ohh my old node without json destructuring
       let position = movement.position;
+      // dead are not allowed to move
+      if (players[position].s === g.Player.statuses.dead) continue;
       let result = g.Player.handleAction(players[position], movement);
-      console.log('src/shared/Game.js:34:18:\'computeMovements\',result', 'computeMovements', result);
+      console.log('src/shared/Game.js:36:18:\'computeMovements\',result', 'computeMovements', result);
       let playerMoved = { player: result.player, position: position };
       // Let's do all the pushing (in case we don't stumble to a wall)
       let playersToMove = [playerMoved];
@@ -114,14 +116,14 @@ g.Game = {
           // TODO compute holes
         }
       }
-      console.log('src/shared/Game.js:51:18:playersToMove.length', playersToMove.length);
+      console.log('src/shared/Game.js:53:18:playersToMove.length', playersToMove.length);
       for (let pl of playersToMove) {
         players[pl.position] = pl.player;
       }
       let postActions = [];
       let originalPlayer = players[position];
       if (laserAction = g.Game.computeLasers(originalPlayer, players, newState)) {
-        //players[laserAction.oposition] = g.Player.decreaseHealth(laserAction.oplayer)
+        players[laserAction.oposition] = g.Player.decreaseHealth(laserAction.oplayer);
         postActions.push(laserAction);
       }
       // TODO handle shooting
@@ -154,7 +156,7 @@ g.Game = {
       if (g.Game.computeMovementObstruction(playerProjection, state)) return false;
       for (let i = 0; i < players.length; i++) {
         if (g.Player.collide(playerProjection, players[i])) {
-          console.log('src/shared/Game.js:90:22:\'colliding\',playerProjection,i,players[i]', 'colliding', playerProjection, i, players[i]);
+          console.log('src/shared/Game.js:92:22:\'colliding\',playerProjection,i,players[i]', 'colliding', playerProjection, i, players[i]);
           return { type: 'laser', player: player, oplayer: players[i], oposition: i };
         }
       }
@@ -162,7 +164,7 @@ g.Game = {
   }
 };
 g.Player = {
-  init: function (complex, playerType, orientation, health) {
+  init: function (complex, playerType, orientation, health, status) {
 
     var tile = g.PlayerTile.init(complex.x, complex.y, playerType, Complex.getTheta(orientation));
     return {
@@ -170,7 +172,8 @@ g.Player = {
       o: orientation,
       c: complex,
       type: playerType,
-      h: health
+      h: health,
+      s: status
     };
   },
   handleAction(player, action) {
@@ -180,26 +183,30 @@ g.Player = {
       return { player: g.Player.move(player, player.o), direction: player.o };
     }
     if (subtype === 'ArrowLeft') {
-      return { player: g.Player.init(player.c, player.type, Complex.multiply(player.o, { x: 0, y: -1 }), player.h) };
+      return { player: g.Player.init(player.c, player.type, Complex.multiply(player.o, { x: 0, y: -1 }), player.h, player.s) };
     }
     if (subtype === 'ArrowRight') {
       // Canvas coordinates grow from top to bottom so orientation is the other sign as usual
-      return { player: g.Player.init(player.c, player.type, Complex.multiply(player.o, { x: 0, y: 1 }), player.h) };
+      return { player: g.Player.init(player.c, player.type, Complex.multiply(player.o, { x: 0, y: 1 }), player.h, player.s) };
     }
     if (subtype === 'ArrowDown') {
       return { player: g.Player.move(player, Complex.multiply({ x: -1, y: 0 }, player.o)), direction: Complex.multiply({ x: -1, y: 0 }, player.o) };
     }
   },
   move(player, vector) {
-    return g.Player.init(Complex.add(player.c, vector), player.type, player.o, player.h);
+    return g.Player.init(Complex.add(player.c, vector), player.type, player.o, player.h, player.s);
   },
   collide(pl1, pl2) {
     return pl1.c.x === pl2.c.x && pl1.c.y === pl2.c.y;
   },
   decreaseHealth(player) {
-    return g.Player.init(player.c, player.type, player.o, player.h * 0.93);
+    var newHealth = player.h * 0.93;
+    return g.Player.init(player.c, player.type, player.o, newHealth, newHealth < 0.5 ? g.Player.statuses.dead : g.Player.statuses.alive);
+  },
+  statuses: {
+    dead: 'dead',
+    alive: 'alive'
   }
-
 };
 g.PlayerTile = {
   init: function (x, y, playerType, theta) {
@@ -308,10 +315,9 @@ g.Input = {
       let action = input.actions[i];
       if (action) {
         c.save();
-        let image = new Image();
+        let image = g.images['arrow'];
         c.translate(h * i + h / 2, h / 2);
         c.rotate(-g.Input.subtypeToTheta(action.subtype));
-        image.src = g.Tiles['arrow'];
         c.drawImage(image, -(h - 2 * d) / 2, -(h - 2 * d) / 2, h - 2 * d, h - 2 * d);
         c.restore();
       }
@@ -393,8 +399,7 @@ Object.assign(g.PlayerTile, {
     var halfImageHeight = finalCoordinates.h / 2;
     g.c.translate(newX + halfImageWidth, newY + halfImageHeight);
     g.c.rotate(theta);
-    var player = new Image();
-    player.src = g.Tiles[newState.type];
+    var player = g.images[newState.type];
     c.drawImage(player, -halfImageHeight, -halfImageWidth, halfImageWidth * 2, halfImageHeight * 2);
     g.c.restore();
   }
@@ -422,7 +427,6 @@ g.store = {
     g.store.oldState = oldState;
     g.store.state = state;
     g.store.render(oldState, state);
-    getById('health').textContent = '100%';
     g.store.acceptInput();
   },
   acceptInput() {
@@ -435,7 +439,7 @@ g.store = {
     var remainingTime = (g.store.inputTime - (new Date() - new Date(g.store.input.time))) / g.store.inputTime;
     if (remainingTime < 0) {
       document.removeEventListener('keydown', g.store.handleKeyDown);
-      console.log('src/client/Store.js:35:18:\'Remaining time is over\'', 'Remaining time is over');
+      console.log('src/client/Store.js:34:18:\'Remaining time is over\'', 'Remaining time is over');
       g.store.input = g.Input.fillInput(g.store.input);
       g.Input.render(g.store.input, -1);
       g.store.sendMovements(g.store.input.actions);
@@ -466,7 +470,7 @@ g.store = {
     g.store.render(state, newState);
   },
   sendMovements(actions) {
-    console.log('src/client/Store.js:64:16:\'Moving\',actions,{actions: g.store.input.actions}', 'Moving', actions, { actions: g.store.input.actions });
+    console.log('src/client/Store.js:63:16:\'Moving\',actions,{actions: g.store.input.actions}', 'Moving', actions, { actions: g.store.input.actions });
     socket.emit('move', actions);
   },
   render(oldState, newState, time) {
@@ -508,7 +512,7 @@ g.store = {
     // Handle post actions from previous movement
     if (postActions.length) {
       for (let postAction of postActions) {
-        console.log('src/client/Store.js:100:20:postAction', postAction);
+        console.log('src/client/Store.js:99:20:postAction', postAction);
         g.store.handleAction(newState, postAction);
       }
       newState.postActions = [];
@@ -537,7 +541,11 @@ g.store = {
   },
   handleAction(state, action) {
     if (action.type === g.Actions.types.laser) {
+      let dieNow = false;
+      if (state.players[action.oposition].s === g.Player.statuses.alive && action.oplayer.s === g.Player.statuses.dead) dieNow = true;
       Object.assign(state.players[action.oposition], action.oplayer);
+      g.store.renderHealth(state.players);
+      if (dieNow) g.store.handleDeath(action.oposition, state);
       // TODO add laser to animation
       return;
     }
@@ -551,6 +559,22 @@ g.store = {
       // TOOD pass health
       g.store.input = g.Input.acceptAction(input, code, 1, remainingTime);
     }
+  },
+  renderHealth(players) {
+    var health = [],
+        player;
+    for (let i = 0; i < players.length; i++) {
+      player = players[i];
+      health.push(`Player ${ i } health: ${ parseInt(2 * (Math.max(player.h, 0.5) - 0.5) * 100) } %`);
+    }
+    g.health.textContent = health.join(' ');
+  },
+  handleDeath(position, state) {
+    if (position === state.position) {
+      console.log('src/client/Store.js:154:18:\'You are dead\'', 'You are dead');
+    } else {
+      console.log('src/client/Store.js:156:18:`Player ${position} is dead`', `Player ${ position } is dead`);
+    }
   }
 };
 Object.assign(g.Tile, { render: function (game, oldTile, newTile) {
@@ -563,8 +587,7 @@ Object.assign(g.Tile, { render: function (game, oldTile, newTile) {
     }
     var realCoordinates = g.Game.getRealCoordinates(game, newTile.x, newTile.y);
     var c = g.bgc;
-    var floor = new Image();
-    floor.src = g.Tiles[newTile.type];
+    var floor = g.images[newTile.type];
     c.drawImage(floor, realCoordinates.x, realCoordinates.y, realCoordinates.w, realCoordinates.h);
   }
 });
@@ -582,10 +605,13 @@ g.bgcanvas = document.getElementById('bgc');
 g.bgc = g.bgcanvas.getContext('2d');
 g.icanvas = document.getElementById('ic');
 g.ic = g.icanvas.getContext('2d');
+g.health = getById('health');
+g.images = {};
 // Nasty trick to cache imgs and make loading sync
 for (let img in g.Tiles) {
   let image = new Image();
   image.src = g.Tiles[img];
+  g.images[img] = image;
 }
 /**
  * Bind Socket.IO and button events
@@ -594,27 +620,27 @@ function bind() {
 
   socket.on('actions', function (actions) {
     g.store.acceptActions(actions);
-    console.log('src/client/init.js:20:16:actions', actions);
+    console.log('src/client/init.js:23:16:actions', actions);
   });
   socket.on('start', function (state) {
-    console.log('src/client/init.js:23:16:\'starting\'', 'starting');
+    console.log('src/client/init.js:26:16:\'starting\'', 'starting');
     g.store.startGame(JSON.parse(state));
     //console.log(state, position)
   });
   socket.on("end", function () {
-    console.log('src/client/init.js:28:16:"Waiting for opponent..."', "Waiting for opponent...");
+    console.log('src/client/init.js:31:16:"Waiting for opponent..."', "Waiting for opponent...");
   });
 
   socket.on("connect", function () {
-    console.log('src/client/init.js:32:16:"Waiting for opponent..."', "Waiting for opponent...");
+    console.log('src/client/init.js:35:16:"Waiting for opponent..."', "Waiting for opponent...");
   });
 
   socket.on("disconnect", function () {
-    console.error('src/client/init.js:36:18:"Connection lost!"', "Connection lost!");
+    console.error('src/client/init.js:39:18:"Connection lost!"', "Connection lost!");
   });
 
   socket.on("error", function () {
-    console.error('src/client/init.js:40:18:"Connection error!"', "Connection error!");
+    console.error('src/client/init.js:43:18:"Connection error!"', "Connection error!");
   });
 }
 function init() {
@@ -690,6 +716,7 @@ Game.prototype.start = function () {
 	    users = this.users;
 	// TODO get type of player from users
 	this.state = g.Game.prepareGame(game);
+	this.alive = this.users.length;
 	this.played = 0;
 	this.movements = [];
 	for (let i = 0; i < users.length; i++) {
@@ -702,21 +729,25 @@ Game.prototype.acceptMove = function (actions, position) {
 	for (let action of actions) {
 		this.movements.push(Object.assign({ position: position }, action));
 	}
-	if (this.played === this.users.length) {
+	if (this.played === this.alive) {
 		this.played = 0;
-		console.log('src/server/server.js:65:14:this.movements', this.movements);
+		console.log('src/server/server.js:66:14:this.movements', this.movements);
 		this.move();
 	}
 };
 
 Game.prototype.move = function () {
 	var movements = this.movements.sort((m1, m2) => m2.remainingTime - m1.remainingTime);
-	console.log('src/server/server.js:72:13:\'Start moving\'', 'Start moving');
+	console.log('src/server/server.js:73:13:\'Start moving\'', 'Start moving');
 	var stateAndActions = g.Game.computeMovements(this.state, movements);
 	this.state = stateAndActions.state;
 	this.movements = [];
 	for (let user of this.users) {
-		console.log('src/server/server.js:77:14:\'sendActions\'', 'sendActions');
+		if (user.alive && this.state.players[user.position].s === g.Player.statuses.dead) {
+			this.alive = this.alive - 1;
+			user.die();
+		}
+		console.log('src/server/server.js:82:14:\'sendActions\'', 'sendActions');
 		user.sendActions(stateAndActions.actions);
 	}
 };
@@ -735,6 +766,7 @@ Game.prototype.ended = function () {
 function User(socket) {
 	this.socket = socket;
 	this.game = null;
+	this.alive = true;
 	this.opponents = [];
 }
 
@@ -746,12 +778,16 @@ function User(socket) {
 User.prototype.start = function (game, position) {
 	this.game = game;
 	this.position = position;
-	console.log('src/server/server.js:110:13:\'Starting\'', 'Starting');
+	console.log('src/server/server.js:116:13:\'Starting\'', 'Starting');
 	this.socket.emit("start", JSON.stringify(Object.assign(game.state, { position: position })));
 };
 
+User.prototype.die = function () {
+	this.alive = false;
+	// TODO, maybe close connection
+};
 User.prototype.move = function (actions) {
-	this.game.acceptMove(actions, this.position);
+	if (this.alive) this.game.acceptMove(actions, this.position);
 };
 
 User.prototype.sendActions = function (actions) {
@@ -798,7 +834,7 @@ module.exports = function (socket) {
 	findOpponent(user);
 
 	socket.on("disconnect", function () {
-		console.log('src/server/server.js:162:14:"Disconnected: " + socket.id', "Disconnected: " + socket.id);
+		console.log('src/server/server.js:172:14:"Disconnected: " + socket.id', "Disconnected: " + socket.id);
 		// TODO handle logic in game, specially moves in the middle
 		removeUser(user);
 		/*if (user.opponent) {
@@ -807,10 +843,10 @@ module.exports = function (socket) {
   }*/
 	});
 	socket.on("move", function (input) {
-		console.log('src/server/server.js:171:14:\'user move\'', 'user move');
+		console.log('src/server/server.js:181:14:\'user move\'', 'user move');
 		// TODO check input
 		user.move(input);
 	});
 
-	console.log('src/server/server.js:176:13:"Connected: " + socket.id', "Connected: " + socket.id);
+	console.log('src/server/server.js:186:13:"Connected: " + socket.id', "Connected: " + socket.id);
 };})()}})()
