@@ -150,7 +150,7 @@ g.store = {
     var code = e.key || e.code, input = g.store.input, newInput = clone(input), remainingTime = (g.store.inputTime - (new Date() - new Date(g.store.input.time))) / g.store.inputTime
     if (MOVEMENTS.indexOf(code) !== -1) {
       // TOOD pass health
-      g.store.input = g.Input.acceptAction(input, code, 1, remainingTime)
+      g.store.input = g.Input.acceptAction(input, code, g.store.state.players[g.store.state.position].h, remainingTime)
     }
   },
   renderHealth (players) {
