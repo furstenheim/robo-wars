@@ -134,6 +134,7 @@ g.store = {
       console.log(action.oplayer.h, state.players[action.oposition].h)
       g.store.renderHealth(state.players)
       g.Laser.showLaser(state.game, action.player, action.oplayer)
+      g.Sounds.play('shoot')
       return
     }
     if (action.type === g.Actions.types.death) {
@@ -161,6 +162,7 @@ g.store = {
     g.health.textContent = health.join(' ')
   },
   handleDeath (position, state) {
+    g.Sounds.play('death')
     if (position === state.position) {
       console.log('You are dead')
       g.store.dead = true

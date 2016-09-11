@@ -63,8 +63,10 @@ g.Input = {
       return input
     }
     if (right) {
+      g.Sounds.play('right')
       newInput.actions.push({type: g.Actions.types.player, subtype: code, remainingTime: remainingTime})
     } else {
+      if (health > 0.1) g.Sounds.play('failed')
       newInput.actions.push({type: g.Actions.types.player, subtype: MOVEMENTS[~~ (Math.random() * 4)], remainingTime: remainingTime})
     }
     return newInput

@@ -31,7 +31,7 @@ gulp.task('build', function () {
     .pipe(createBabel())
     .pipe(concat('server.js'))
     .pipe(insert.wrap('if (typeof window === \'undefined\') {(function (){', '})()}'))
-
+    
   var js = merge(shared, client, server)
     .pipe(concat('server.js'))
     .pipe(insert.wrap('(function () {"use strict"\n', '})()'))

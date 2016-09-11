@@ -1,70 +1,21 @@
-/* init variables here */
-g.canvas = document.getElementById('c')
-g.c = g.canvas.getContext('2d')
-g.bgcanvas = document.getElementById('bgc')
-g.bgc = g.bgcanvas.getContext('2d')
-g.icanvas = document.getElementById('ic')
-g.ic = g.icanvas.getContext('2d')
-g.lcanvas = document.getElementById('lc')
-g.lc = g.lcanvas.getContext('2d')
-g.health = getById('health')
-g.message = getById('message')
-g.images = {}
-// Nasty trick to cache imgs and make loading sync
-for (let img in g.Tiles) {
-  let image = new Image()
-  image.src = g.Tiles[img]
-  g.images[img] = image
-}
-/**
- * Bind Socket.IO and button events
- */
-function bind() {
-
-  socket.on('actions', function (actions) {
-    g.store.acceptActions(actions)
-    console.log(actions)
-  })
-  socket.on('start', function (state) {
-    console.log('starting')
-    g.store.startGame(JSON.parse(state))
-    //console.log(state, position)
-  })
-  socket.on("end", function () {
-    console.log("Waiting for opponent...");
-  });
-
-  socket.on("connect", function () {
-    console.log("Waiting for opponent...");
-  });
-
-  socket.on("disconnect", function () {
-    console.error("Connection lost!");
-  });
-  socket.on('winner', function (position) {
-    g.store.handleWin(position, g.store.state)
-  })
-
-  socket.on("error", function () {
-    console.error("Connection error!");
-  });
-}
-function init() {
-  socket = io({ upgrade: false, transports: ["websocket"] });
-  bind();
-}
-
-window.addEventListener("load", init, false);
-
-
-
-
-
-g.store.state = g.store.init();
-
-
+g.Sounds = {
+    types : {
+      shoot: [3,0.0948,0.0129,0.3671,0.3266,0.5,,,-0.0095,,0.0367,-0.5561,0.2962,,0.0279,0.661,0.0342,0.6563,0.9997,0.2854,,0.1397,-0.0457,0.5],
+      failed: [3,,0.6665,0.3981,0.468,0.5321,,0.0299,-0.9171,,0.1315,0.1741,,,-0.0362,,-0.7438,-0.0077,0.9986,,0.2791,0.3116,0.2152,0.5],
+      right: [2,,0.5642,0.1458,0.9778,0.5008,,-0.002,0.8448,0.0123,,0.6281,,,-0.2081,,-0.2477,-0.0012,0.974,-0.6453,0.9891,0.8115,0.1889,0.5],
+      death: [3,0.0011,0.396,0.4339,0.2223,0.5037,,0.0302,0.8244,0.0029,0.5527,0.6106,0.0088,,-0.103,,0.048,-0.2334,0.9933,0.0696,0.3596,0.0001,0.0033,0.5]
+    },
+    play(type) {
+      var sound
+      if (sound = g.Sounds.types[type]) {
+        var audio = new Audio()
+        audio.src = jsfxr(sound)
+        audio.play()
+    }
+  }
+};
 /*	https://github.com/mneubrand/jsfxr Minified version from https://github.com/eoinmcg/roboflip/blob/master/js/lib/jsfxr.min.js
-*/ 
+*/
 (function () {
 function SfxrParams(){this.setSettings=function(e){for(var f=0;24>f;f++)this[String.fromCharCode(97+f)]=e[f]||0;.01>this.c&&(this.c=.01);e=this.b+this.c+this.e;.18>e&&(e=.18/e,this.b*=e,this.c*=e,this.e*=e)}}
 function SfxrSynth(){this._params=new SfxrParams;var e,f,d,h,l,A,K,L,M,B,m,N;this.reset=function(){var b=this._params;h=100/(b.f*b.f+.001);l=100/(b.g*b.g+.001);A=1-b.h*b.h*b.h*.01;K=-b.i*b.i*b.i*1E-6;b.a||(m=.5-b.n/2,N=5E-5*-b.o);L=1+b.l*b.l*(0<b.l?-.9:10);M=0;B=1==b.m?0:(1-b.m)*(1-b.m)*2E4+32};this.totalReset=function(){this.reset();var b=this._params;e=b.b*b.b*1E5;f=b.c*b.c*1E5;d=b.e*b.e*1E5+12;return 3*((e+f+d)/3|0)};this.synthWave=function(b,O){var a=this._params,P=1!=a.s||a.v,r=a.v*a.v*.1,Q=
