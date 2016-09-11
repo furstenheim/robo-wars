@@ -130,7 +130,7 @@ g.Game = {
         players[laserAction.oposition] = weakenedPlayer;
         postActions.push(Object.assign(laserAction, { oplayer: weakenedPlayer }));
         if (dieNow) {
-          postActions.push({ type: g.Actions.death, oposition: laserAction.oposition });
+          postActions.push({ type: g.Actions.types.death, oposition: laserAction.oposition });
           let numberOfDeath = 0;
           let alivePlayer = -1;
           for (let i = 0; i < players.length; i++) {
@@ -448,15 +448,17 @@ g.store = {
   },
   acceptInput() {
     if (!g.store.input) {
-      g.store.input = g.Input.init();
-      document.addEventListener('keydown', g.store.handleKeyDown, false);
-      return window.requestAnimationFrame(g.store.acceptInput);
+      if (!g.store.dead && !g.store.won) {
+        g.store.input = g.Input.init();
+        document.addEventListener('keydown', g.store.handleKeyDown, false);
+        return window.requestAnimationFrame(g.store.acceptInput);
+      }
     }
     // TODO only send necessary actions
     var remainingTime = (g.store.inputTime - (new Date() - new Date(g.store.input.time))) / g.store.inputTime;
     if (remainingTime < 0) {
       document.removeEventListener('keydown', g.store.handleKeyDown);
-      console.log('src/client/Store.js:34:18:\'Remaining time is over\'', 'Remaining time is over');
+      console.log('src/client/Store.js:36:18:\'Remaining time is over\'', 'Remaining time is over');
       g.store.input = g.Input.fillInput(g.store.input);
       g.Input.render(g.store.input, -1);
       g.store.sendMovements(g.store.input.actions);
@@ -487,7 +489,7 @@ g.store = {
     g.store.render(state, newState);
   },
   sendMovements(actions) {
-    console.log('src/client/Store.js:63:16:\'Moving\',actions,{actions: g.store.input.actions}', 'Moving', actions, { actions: g.store.input.actions });
+    console.log('src/client/Store.js:65:16:\'Moving\',actions,{actions: g.store.input.actions}', 'Moving', actions, { actions: g.store.input.actions });
     socket.emit('move', actions);
   },
   render(oldState, newState, time) {
@@ -529,7 +531,7 @@ g.store = {
     // Handle post actions from previous movement
     if (postActions.length) {
       for (let postAction of postActions) {
-        console.log('src/client/Store.js:99:20:postAction', postAction);
+        console.log('src/client/Store.js:101:20:postAction', postAction);
         g.store.handleAction(newState, postAction);
       }
       newState.postActions = [];
@@ -560,11 +562,12 @@ g.store = {
     if (action.type === g.Actions.types.laser) {
 
       Object.assign(state.players[action.oposition], action.oplayer);
-      console.log('src/client/Store.js:130:18:action.oplayer.h,state.players[action.oposition].h', action.oplayer.h, state.players[action.oposition].h);
+      console.log('src/client/Store.js:132:18:action.oplayer.h,state.players[action.oposition].h', action.oplayer.h, state.players[action.oposition].h);
       g.store.renderHealth(state.players);
       return;
     }
     if (action.type === g.Actions.types.death) {
+      console.log('src/client/Store.js:137:18:\'death\'', 'death');
       g.store.handleDeath(action.oposition, state);
       return;
     }
@@ -593,14 +596,16 @@ g.store = {
   },
   handleDeath(position, state) {
     if (position === state.position) {
-      console.log('src/client/Store.js:159:18:\'You are dead\'', 'You are dead');
+      console.log('src/client/Store.js:162:18:\'You are dead\'', 'You are dead');
+      g.store.dead = true;
     } else {
-      console.log('src/client/Store.js:161:18:`Player ${position} is dead`', `Player ${ position } is dead`);
+      console.log('src/client/Store.js:165:18:`Player ${position} is dead`', `Player ${ position } is dead`);
     }
   },
   handleWin(position, state) {
     if (position === state.position) {
-      console.log('src/client/Store.js:166:18:\'You won\'', 'You won');
+      g.store.won = true;
+      console.log('src/client/Store.js:171:18:\'You won\'', 'You won');
     }
   }
 };

@@ -23,9 +23,11 @@ g.store = {
   },
   acceptInput() {
     if (!g.store.input) {
-      g.store.input = g.Input.init()
-      document.addEventListener('keydown', g.store.handleKeyDown, false)
-      return window.requestAnimationFrame(g.store.acceptInput)
+      if (!g.store.dead && !g.store.won) {
+        g.store.input = g.Input.init()
+        document.addEventListener('keydown', g.store.handleKeyDown, false)
+        return window.requestAnimationFrame(g.store.acceptInput)
+      }
     }
     // TODO only send necessary actions
     var remainingTime = (g.store.inputTime - (new Date() - new Date(g.store.input.time))) / g.store.inputTime
@@ -132,6 +134,7 @@ g.store = {
       return
     }
     if (action.type === g.Actions.types.death) {
+      console.log('death')
       g.store.handleDeath(action.oposition, state)
       return
     }
@@ -157,12 +160,14 @@ g.store = {
   handleDeath (position, state) {
     if (position === state.position) {
       console.log('You are dead')
+      g.store.dead = true
     } else {
       console.log(`Player ${position} is dead`)
     }
   },
   handleWin (position, state) {
     if (position === state.position) {
+      g.store.won = true
       console.log('You won')
     }
   }
