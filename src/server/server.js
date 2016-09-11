@@ -30,8 +30,15 @@ function findOpponent(user) {
 
 
 function removeUser(user) {
-	if (user.game) user.game.removeUser(user)
+	if (user.game) {
+		user.game.removeUser(user)
+	} else {
+		for (let opponent of user.opponents) {
+			opponent.removeOpponent(user)
+		}
+	}
 	users.splice(users.indexOf(user), 1);
+
 }
 
 function Game(users) {
@@ -56,6 +63,7 @@ Game.prototype.acceptMove = function (actions, position) {
 	for (let action of actions) {
 		this.movements.push(Object.assign({position: position}, action))
 	}
+	console.log(this.alive)
 	if (this.played === this.alive) {
 		this.played = 0
 		console.log(this.movements)
@@ -80,13 +88,16 @@ Game.prototype.move = function () {
 }
 Game.prototype.removeUser = function(user) {
 	console.log(user.alive)
+	// When reconnecting the same socket is used and this can lead to weird errors
 	if (user.alive) {
 		user.alive = false
 		this.alive = this.alive -1
 		this.state.players[user.position].s = g.Player.statuses.dead
+		this.users.splice(this.users.indexOf(user), 1);
 		var aliveUser
 		for (let otherUser of this.users) {
 			otherUser.announceDeath(user.position)
+			otherUser.removeOpponent(user)
 			if (otherUser.alive) aliveUser = otherUser
 		}
 		if (this.alive === 1) {
@@ -136,13 +147,16 @@ User.prototype.startCount = function () {
 	this.timeout = setTimeout(function () {
 		console.log('start game without enough players')
 		new Game([user].concat(user.opponents)).start()
-	}, 1000)
+	}, 30000)
 }
 User.prototype.removeCount = function () {
 	clearTimeout(this.timeout)
 }
 User.prototype.sendActions = function (actions) {
 	this.socket.emit('actions', actions)
+}
+User.prototype.removeOpponent = function (user) {
+	this.opponents.splice(users.indexOf(user), 1);
 }
 
 /**

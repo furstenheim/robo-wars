@@ -110,6 +110,7 @@ g.store = {
     } else {
       // Handle actions
       if (!remainingActions.length) {
+        console.log('acceptInput')
         g.store.acceptInput()
         return
       }
