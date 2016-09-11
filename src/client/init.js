@@ -41,6 +41,9 @@ function bind() {
   socket.on("disconnect", function () {
     console.error("Connection lost!");
   });
+  socket.on('winner', function (position) {
+    g.store.handleWin(position, g.store.state)
+  })
 
   socket.on("error", function () {
     console.error("Connection error!");
@@ -74,4 +77,3 @@ g.store.state.remainingActions = [[
     {type:g.Actions.types.player, player: 2, subtype: 'ArrowLeft'},
     {type:g.Actions.types.player, player: 3, subtype: 'ArrowUp'}]]
 g.store.displayMovement()*/
-

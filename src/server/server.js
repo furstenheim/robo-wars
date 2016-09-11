@@ -16,7 +16,7 @@ function findOpponent(user) {
 			// loggedUser counts for the total number
 			loggedUser.opponents.length < g.Game.np - 1
 			&&
-			!user.started
+			!loggedUser.started
 		) {
 			for(let opponent of loggedUser.opponents) {
 				user.opponents.push(opponent)
@@ -90,6 +90,22 @@ Game.prototype.move = function () {
 	}
 }
 Game.prototype.removeUser = function(user) {
+	console.log(user.alive)
+	if (user.alive) {
+		user.alive = false
+		this.alive = this.alive -1
+		this.state.players[user.position].s = g.Player.statuses.dead
+		var aliveUser
+		for (let otherUser of this.users) {
+			otherUser.announceDeath(user.position)
+			if (otherUser.alive) aliveUser = otherUser
+		}
+		if (this.alive === 1) {
+			for (let otherUser of this.users) {
+				otherUser.announceWinner(aliveUser.position)
+			}
+		}
+	}
 
 }
 /**
@@ -125,14 +141,21 @@ User.prototype.die = function () {
 User.prototype.move = function (actions) {
 	if (this.alive) this.game.acceptMove(actions, this.position)
 }
+User.prototype.announceDeath = function () {
+	// Not interested for now
+}
 
+User.prototype.announceWinner = function (position) {
+	console.log('We have a winner')
+	this.socket.emit('winner', position)
+}
 // In case there are not a lot of users we take what we have
 User.prototype.startCount = function () {
 	var user = this
 	this.timeout = setTimeout(function () {
 		console.log('start game without enough players')
 		new Game([user].concat(user.opponents)).start()
-	}, 30000)
+	}, 1000)
 }
 User.prototype.removeCount = function () {
 	clearTimeout(this.timeout)
@@ -140,36 +163,6 @@ User.prototype.removeCount = function () {
 User.prototype.sendActions = function (actions) {
 	this.socket.emit('actions', actions)
 }
-// /**
-//  * Terminate game
-//  */
-// User.prototype.end = function () {
-// 	this.game = null;
-// 	this.opponent = null;
-// 	this.guess = GUESS_NO;
-// 	this.socket.emit("end");
-// };
-
-// /**
-//  * Trigger win event
-//  */
-// User.prototype.win = function () {
-// 	this.socket.emit("win", this.opponent.guess);
-// };
-//
-// /**
-//  * Trigger lose event
-//  */
-// User.prototype.lose = function () {
-// 	this.socket.emit("lose", this.opponent.guess);
-// };
-//
-// /**
-//  * Trigger draw event
-//  */
-// User.prototype.draw = function () {
-// 	this.socket.emit("draw", this.opponent.guess);
-// };
 
 /**
  * Socket.IO on connect event

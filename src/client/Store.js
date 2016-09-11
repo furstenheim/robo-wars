@@ -27,7 +27,7 @@ g.store = {
   },
   acceptInput() {
     if (!g.store.input) {
-      if (!g.store.dead && !g.store.won) {
+      if (!g.store.dead && !g.won) {
         g.store.input = g.Input.init()
         document.addEventListener('keydown', g.store.handleKeyDown, false)
         return window.requestAnimationFrame(g.store.acceptInput)
@@ -172,7 +172,7 @@ g.store = {
   },
   handleWin (position, state) {
     if (position === state.position) {
-      g.store.won = true
+      g.won = true
       g.message.textContent = 'You WON'
       console.log('You won')
     }
