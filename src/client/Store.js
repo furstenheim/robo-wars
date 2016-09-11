@@ -19,6 +19,7 @@ g.store = {
     g.store.oldState = oldState
     g.store.state = state
     g.store.render(oldState, state)
+    g.Input.renderRobot(state)
     g.store.acceptInput()
   },
   acceptInput() {

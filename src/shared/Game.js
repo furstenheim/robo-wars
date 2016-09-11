@@ -1,11 +1,13 @@
 g.Game = {
+  get sx() {return 20},
+  get sy() {return 15},
   init: function () {
     return {
       // TODO move this to client
-      h:1000,
-      w: 1500,
-      sx: 30,
-      sy: 20,
+      h:g.Game.sy * 40,
+      w: g.Game.sx * 40,
+      sx: g.Game.sx,
+      sy: g.Game.sy,
       np: g.Game.np
     }
   },

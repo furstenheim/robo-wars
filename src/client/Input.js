@@ -7,9 +7,14 @@ g.Input = {
   },
   size:{
     w: 800,
-    h: 100
+    h: 40
   },
   max: 4,
+  renderRobot: function (state) {
+    var h = g.Input.size.h, w = g.Input.size.w, c = g.ic, position = state.position, img = g.images['player' + position]
+    c.clearRect(0, h, w, w)
+    c.drawImage(img, 0, h, h * g.Input.max,h * g.Input.max)
+  },
   render: function (input, fraction) {
     var h = g.Input.size.h, w = g.Input.size.w, c = g.ic, d =~~ (h / 30), imgLoaded = 0, cx= h * g.Input.max + h/2, cy = h/2
     // For some reason circle does not disappear without c.beginPath?¿
