@@ -1,13 +1,6 @@
-/**
- * User sessions
- * @param {array} users
- */
+
 var users = [];
 
-/**
- * Find opponents for a user
- * @param {User} user
- */
 function findOpponent(user) {
 	for(let loggedUser of users) {
 		// This actually does not work for g.Game.np === 1. But who wants to play alone?
@@ -35,10 +28,7 @@ function findOpponent(user) {
 	}
 }
 
-/**
- * Remove user session
- * @param {User} user
- */
+
 function removeUser(user) {
 	if (user.game) user.game.removeUser(user)
 	users.splice(users.indexOf(user), 1);
@@ -47,9 +37,8 @@ function removeUser(user) {
 function Game(users) {
 	this.users = users
 }
-/**
- * Start new game
- */
+
+
 Game.prototype.start = function () {
 	var game = g.Game.init(), users = this.users
 	// TODO get type of player from users
@@ -108,14 +97,6 @@ Game.prototype.removeUser = function(user) {
 	}
 
 }
-/**
- * Is game ended
- * @return {boolean}
- */
-Game.prototype.ended = function () {
-	return this.user1.guess !== GUESS_NO && this.user2.guess !== GUESS_NO;
-}
-
 
 
 function User(socket) {
@@ -175,12 +156,7 @@ module.exports = function (socket) {
 
 	socket.on("disconnect", function () {
 		console.log("Disconnected: " + socket.id);
-		// TODO handle logic in game, specially moves in the middle
 		removeUser(user);
-		/*if (user.opponent) {
-			user.opponent.end();
-			findOpponent(user.opponent);
-		}*/
 	});
 	socket.on("move", function (input) {
 		console.log('user move')

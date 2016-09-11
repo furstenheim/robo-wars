@@ -1,7 +1,5 @@
 (function () {"use strict"
 /* Shared variables and global js variables (better here than global so they can be minified */
-// TODO move this to client so there are no conflicts
-//var socket
 // global variable
 var g = {};
 var MOVEMENTS = ['ArrowRight', 'ArrowUp', 'ArrowLeft', 'ArrowDown'];
@@ -758,16 +756,9 @@ g.store.state.remainingActions = [[
     {type:g.Actions.types.player, player: 2, subtype: 'ArrowLeft'},
     {type:g.Actions.types.player, player: 3, subtype: 'ArrowUp'}]]
 g.store.displayMovement()*/})()}
-if (typeof window === 'undefined') {(function (){/**
- * User sessions
- * @param {array} users
- */
+if (typeof window === 'undefined') {(function (){
 var users = [];
 
-/**
- * Find opponents for a user
- * @param {User} user
- */
 function findOpponent(user) {
 	for (let loggedUser of users) {
 		// This actually does not work for g.Game.np === 1. But who wants to play alone?
@@ -791,10 +782,6 @@ function findOpponent(user) {
 	}
 }
 
-/**
- * Remove user session
- * @param {User} user
- */
 function removeUser(user) {
 	if (user.game) user.game.removeUser(user);
 	users.splice(users.indexOf(user), 1);
@@ -803,9 +790,7 @@ function removeUser(user) {
 function Game(users) {
 	this.users = users;
 }
-/**
- * Start new game
- */
+
 Game.prototype.start = function () {
 	var game = g.Game.init(),
 	    users = this.users;
@@ -826,14 +811,14 @@ Game.prototype.acceptMove = function (actions, position) {
 	}
 	if (this.played === this.alive) {
 		this.played = 0;
-		console.log('src/server/server.js:72:14:this.movements', this.movements);
+		console.log('src/server/server.js:61:14:this.movements', this.movements);
 		this.move();
 	}
 };
 
 Game.prototype.move = function () {
 	var movements = this.movements.sort((m1, m2) => m2.remainingTime - m1.remainingTime);
-	console.log('src/server/server.js:79:13:\'Start moving\'', 'Start moving');
+	console.log('src/server/server.js:68:13:\'Start moving\'', 'Start moving');
 	var stateAndActions = g.Game.computeMovements(this.state, movements);
 	this.state = stateAndActions.state;
 	this.movements = [];
@@ -842,12 +827,12 @@ Game.prototype.move = function () {
 			this.alive = this.alive - 1;
 			user.die();
 		}
-		console.log('src/server/server.js:88:14:\'sendActions\'', 'sendActions');
+		console.log('src/server/server.js:77:14:\'sendActions\'', 'sendActions');
 		user.sendActions(stateAndActions.actions);
 	}
 };
 Game.prototype.removeUser = function (user) {
-	console.log('src/server/server.js:93:13:user.alive', user.alive);
+	console.log('src/server/server.js:82:13:user.alive', user.alive);
 	if (user.alive) {
 		user.alive = false;
 		this.alive = this.alive - 1;
@@ -864,13 +849,6 @@ Game.prototype.removeUser = function (user) {
 		}
 	}
 };
-/**
- * Is game ended
- * @return {boolean}
- */
-Game.prototype.ended = function () {
-	return this.user1.guess !== GUESS_NO && this.user2.guess !== GUESS_NO;
-};
 
 function User(socket) {
 	this.socket = socket;
@@ -883,7 +861,7 @@ User.prototype.start = function (game, position) {
 	this.game = game;
 	this.started = true;
 	this.position = position;
-	console.log('src/server/server.js:133:13:\'Starting\'', 'Starting');
+	console.log('src/server/server.js:114:13:\'Starting\'', 'Starting');
 	this.socket.emit("start", JSON.stringify(Object.assign(game.state, { position: position })));
 };
 
@@ -899,14 +877,14 @@ User.prototype.announceDeath = function () {
 };
 
 User.prototype.announceWinner = function (position) {
-	console.log('src/server/server.js:149:13:\'We have a winner\'', 'We have a winner');
+	console.log('src/server/server.js:130:13:\'We have a winner\'', 'We have a winner');
 	this.socket.emit('winner', position);
 };
 // In case there are not a lot of users we take what we have
 User.prototype.startCount = function () {
 	var user = this;
 	this.timeout = setTimeout(function () {
-		console.log('src/server/server.js:156:14:\'start game without enough players\'', 'start game without enough players');
+		console.log('src/server/server.js:137:14:\'start game without enough players\'', 'start game without enough players');
 		new Game([user].concat(user.opponents)).start();
 	}, 1000);
 };
@@ -927,19 +905,14 @@ module.exports = function (socket) {
 	findOpponent(user);
 
 	socket.on("disconnect", function () {
-		console.log('src/server/server.js:177:14:"Disconnected: " + socket.id', "Disconnected: " + socket.id);
-		// TODO handle logic in game, specially moves in the middle
+		console.log('src/server/server.js:158:14:"Disconnected: " + socket.id', "Disconnected: " + socket.id);
 		removeUser(user);
-		/*if (user.opponent) {
-  	user.opponent.end();
-  	findOpponent(user.opponent);
-  }*/
 	});
 	socket.on("move", function (input) {
-		console.log('src/server/server.js:186:14:\'user move\'', 'user move');
+		console.log('src/server/server.js:162:14:\'user move\'', 'user move');
 		// TODO check input
 		user.move(input);
 	});
 
-	console.log('src/server/server.js:191:13:"Connected: " + socket.id', "Connected: " + socket.id);
+	console.log('src/server/server.js:167:13:"Connected: " + socket.id', "Connected: " + socket.id);
 };})()}})()

@@ -1,6 +1,4 @@
 /* Shared variables and global js variables (better here than global so they can be minified */
-// TODO move this to client so there are no conflicts
-//var socket
 // global variable
 var g = {}
 var MOVEMENTS = ['ArrowRight', 'ArrowUp', 'ArrowLeft', 'ArrowDown']
