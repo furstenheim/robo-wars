@@ -3,5 +3,5 @@
 var g = {}
 var MOVEMENTS = ['ArrowRight', 'ArrowUp', 'ArrowLeft', 'ArrowDown']
 function clone (object){return JSON.parse(JSON.stringify(object))}
-// Half PI
+// Half PI 
 var P = Math.PI / 2

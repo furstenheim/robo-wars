@@ -14,6 +14,7 @@ var concat = require('gulp-concat')
 var insert = require('gulp-insert')
 var clone = require('gulp-clone')
 var babel = require('gulp-babel')
+var strip = require('gulp-strip-comments')
 
 gulp.task('build', function () {
   var s = size()
@@ -47,7 +48,7 @@ gulp.task('build', function () {
     .pipe(gulp.dest('public'))
     .pipe(livereload())
 
-  var minifiedJs = js.pipe(clone()).pipe(stripDebug().on('error', function (e) {console.error(e)})).pipe(babel({presets:['babili']}))
+  var minifiedJs = js/*.pipe(clone())*/.pipe(strip()).pipe(stripDebug().on('error', function (e) {console.error(e)})).pipe(babel({presets:['babili']}))
   // So we can quickly check minification is right
   minifiedJs.pipe(gulp.dest('dist'))
   merge(minifiedJs, html, clientFile, sharedFile)
