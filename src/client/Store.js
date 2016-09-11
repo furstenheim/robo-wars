@@ -26,12 +26,11 @@ g.store = {
     g.store.acceptInput()
   },
   acceptInput() {
+    if (g.store.dead || g.won) return
     if (!g.store.input) {
-      if (!g.store.dead && !g.won) {
-        g.store.input = g.Input.init()
-        document.addEventListener('keydown', g.store.handleKeyDown, false)
-        return window.requestAnimationFrame(g.store.acceptInput)
-      }
+      g.store.input = g.Input.init()
+      document.addEventListener('keydown', g.store.handleKeyDown, false)
+      return window.requestAnimationFrame(g.store.acceptInput)
     }
     // TODO only send necessary actions
     var remainingTime = (g.store.inputTime - (new Date() - new Date(g.store.input.time))) / g.store.inputTime
