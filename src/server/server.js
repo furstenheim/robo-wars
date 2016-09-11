@@ -35,7 +35,7 @@ function findOpponent(user) {
  * @param {User} user
  */
 function removeUser(user) {
-	user.game.removeUser(user)
+	if (user.game) user.game.removeUser(user)
 	users.splice(users.indexOf(user), 1);
 }
 
@@ -169,7 +169,7 @@ User.prototype.draw = function () {
 module.exports = function (socket) {
 	var user = new User(socket)
 	users.push(user);
-	findOpponent(user);
+	findOpponent(user)
 
 	socket.on("disconnect", function () {
 		console.log("Disconnected: " + socket.id);

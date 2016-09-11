@@ -47,7 +47,7 @@ gulp.task('build', function () {
     .pipe(gulp.dest('public'))
     .pipe(livereload())
 
-  var minifiedJs = js/*.pipe(clone())*/.pipe(stripDebug().on('error', function (e) {console.error(e)})).pipe(babel({presets:['babili']}))
+  var minifiedJs = js.pipe(clone()).pipe(stripDebug().on('error', function (e) {console.error(e)})).pipe(babel({presets:['babili']}))
   // So we can quickly check minification is right
   minifiedJs.pipe(gulp.dest('dist'))
   merge(minifiedJs, html, clientFile, sharedFile)

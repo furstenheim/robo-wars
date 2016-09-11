@@ -770,7 +770,7 @@ function findOpponent(user) {
  * @param {User} user
  */
 function removeUser(user) {
-	user.game.removeUser(user);
+	if (user.game) user.game.removeUser(user);
 	users.splice(users.indexOf(user), 1);
 }
 
