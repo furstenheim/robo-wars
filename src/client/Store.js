@@ -9,6 +9,7 @@ g.store = {
     }
   },
   movement: 1000,
+  laserMovement: 50,
   inputActions: 4,
   inputTime: 2000,
   listenInput: false,
@@ -130,10 +131,10 @@ g.store = {
   },
   handleAction (state, action) {
     if (action.type === g.Actions.types.laser) {
-
       Object.assign(state.players[action.oposition], action.oplayer)
       console.log(action.oplayer.h, state.players[action.oposition].h)
       g.store.renderHealth(state.players)
+      g.Laser.showLaser(state.game, action.player, action.oplayer)
       return
     }
     if (action.type === g.Actions.types.death) {

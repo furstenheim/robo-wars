@@ -13,7 +13,7 @@ g.Game = {
   },
   get np() {return 2},
   prepareGame: function (game) {
-    var i,j, types = ['floor', 'wall'], type, tiles=[], players=[],distorsionsx = [0, 1/2, 0.99, 1/2], distorsionsy = [ 1/2, 0, 1/2, 0.99], distorsionst = [[1, 0], [0,1], [-1, 0], [0, -1]], xs = [], ys = []
+    var i,j, types = ['floor', 'wall'], type, tiles=[], players=[],distorsionsx = [0, 0.05, 0.99, 1/2], distorsionsy = [ 0.50, 0.55, 1/2, 0.99]/*,distorsionsx = [0, 1/2, 0.99, 1/2], distorsionsy = [ 1/2, 0, 1/2, 0.99]*/, distorsionst = [[1, 0], [0,1], [-1, 0], [0, -1]], xs = [], ys = []
     for (i=0; i<game.np; i++) {
       let x = ~~ (distorsionsx[i] * game.sx)
       let y =  ~~ (distorsionsy[i] * game.sy)

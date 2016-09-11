@@ -80,8 +80,8 @@ g.Game = {
         type,
         tiles = [],
         players = [],
-        distorsionsx = [0, 1 / 2, 0.99, 1 / 2],
-        distorsionsy = [1 / 2, 0, 1 / 2, 0.99],
+        distorsionsx = [0, 0.05, 0.99, 1 / 2],
+        distorsionsy = [0.50, 0.55, 1 / 2, 0.99] /*,distorsionsx = [0, 1/2, 0.99, 1/2], distorsionsy = [ 1/2, 0, 1/2, 0.99]*/,
         distorsionst = [[1, 0], [0, 1], [-1, 0], [0, -1]],
         xs = [],
         ys = [];
@@ -289,29 +289,6 @@ g.Tile = {
 };
 if (typeof window !== 'undefined') {(function (){var socket;
 var getById = document.getElementById.bind(document);
-/*
-g.Action = {
-  init: function (type, params) {
-    var action
-    switch (type) {
-      case 'playerMovement':
-        action = g.Action.player(params)
-        break
-      case 'laser':
-
-      default:
-        action = {}
-        break
-    }
-    return Object.assign(action, {type: type})
-  },
-  playerMovement: function (params) {
-    return {
-      subtype: params.type,
-      player: params.player
-    }
-  }
-}*/
 Object.assign(g.Game, {
   // No need for this on the server
   getRealCoordinates: function (game, x, y) {
@@ -418,6 +395,44 @@ g.Input = {
     return newInput;
   }
 };
+g.Laser = {
+  render(game, player, oplayer, time) {
+    time = Math.min(Math.max(time, 0), g.store.laserMovement) / g.store.laserMovement;
+    var initialCoordinates = g.Game.getRealCoordinates(game, player.c.x, player.c.y);
+    var finalCoordinates = g.Game.getRealCoordinates(game, oplayer.c.x, oplayer.c.y);
+    var c = g.lc;
+    c.clearRect(0, 0, game.w, game.h);
+    c.strokeStyle = 'red';
+    c.beginPath();
+    var ix = initialCoordinates.x + game.w / game.sx / 2;
+    var iy = initialCoordinates.y + game.h / game.sy / 2;
+    var fx = finalCoordinates.x + game.w / game.sx / 2;
+    var fy = finalCoordinates.y + game.h / game.sy / 2;
+    //c.moveTo(ix * (1 - time) + fx * time, iy * (1- time) + fy * time )
+    //c.lineTo(ix * (1 - time) + fx * (time + 0.1), iy * (1- time) + fy * (time + 0.1))
+    c.moveTo(ix, iy);
+    c.lineTo(fx, fy);
+    c.stroke();
+  },
+  showLaser(game, player, oplayer) {
+    var animating = g.Laser.animating,
+        elapsedTime = new Date() - g.Laser.time;
+    if (animating) {
+      if (elapsedTime > g.store.laserMovement) {
+        g.Laser.animating = false;
+        var c = g.lc;
+        c.clearRect(0, 0, game.w, game.h);
+      } else {
+        window.requestAnimationFrame(() => g.Laser.showLaser(game, player, oplayer));
+        g.Laser.render(game, player, oplayer, elapsedTime);
+      }
+      return;
+    }
+    g.Laser.time = new Date();
+    g.Laser.animating = true;
+    window.requestAnimationFrame(() => g.Laser.showLaser(game, player, oplayer));
+  }
+};
 
 Object.assign(g.PlayerTile, {
   render: function (game, oldState, newState, time) {
@@ -461,6 +476,7 @@ g.store = {
     };
   },
   movement: 1000,
+  laserMovement: 50,
   inputActions: 4,
   inputTime: 2000,
   listenInput: false,
@@ -490,7 +506,7 @@ g.store = {
     var remainingTime = (g.store.inputTime - (new Date() - new Date(g.store.input.time))) / g.store.inputTime;
     if (remainingTime < 0) {
       document.removeEventListener('keydown', g.store.handleKeyDown);
-      console.log('src/client/Store.js:39:18:\'Remaining time is over\'', 'Remaining time is over');
+      console.log('src/client/Store.js:40:18:\'Remaining time is over\'', 'Remaining time is over');
       g.store.input = g.Input.fillInput(g.store.input);
       g.Input.render(g.store.input, -1);
       g.store.sendMovements(g.store.input.actions);
@@ -521,7 +537,7 @@ g.store = {
     g.store.render(state, newState);
   },
   sendMovements(actions) {
-    console.log('src/client/Store.js:68:16:\'Moving\',actions,{actions: g.store.input.actions}', 'Moving', actions, { actions: g.store.input.actions });
+    console.log('src/client/Store.js:69:16:\'Moving\',actions,{actions: g.store.input.actions}', 'Moving', actions, { actions: g.store.input.actions });
     socket.emit('move', actions);
   },
   render(oldState, newState, time) {
@@ -563,7 +579,7 @@ g.store = {
     // Handle post actions from previous movement
     if (postActions.length) {
       for (let postAction of postActions) {
-        console.log('src/client/Store.js:104:20:postAction', postAction);
+        console.log('src/client/Store.js:105:20:postAction', postAction);
         g.store.handleAction(newState, postAction);
       }
       newState.postActions = [];
@@ -592,14 +608,14 @@ g.store = {
   },
   handleAction(state, action) {
     if (action.type === g.Actions.types.laser) {
-
       Object.assign(state.players[action.oposition], action.oplayer);
       console.log('src/client/Store.js:135:18:action.oplayer.h,state.players[action.oposition].h', action.oplayer.h, state.players[action.oposition].h);
       g.store.renderHealth(state.players);
+      g.Laser.showLaser(state.game, action.player, action.oplayer);
       return;
     }
     if (action.type === g.Actions.types.death) {
-      console.log('src/client/Store.js:140:18:\'death\'', 'death');
+      console.log('src/client/Store.js:141:18:\'death\'', 'death');
       g.store.handleDeath(action.oposition, state);
       return;
     }
@@ -628,18 +644,18 @@ g.store = {
   },
   handleDeath(position, state) {
     if (position === state.position) {
-      console.log('src/client/Store.js:165:18:\'You are dead\'', 'You are dead');
+      console.log('src/client/Store.js:166:18:\'You are dead\'', 'You are dead');
       g.store.dead = true;
       g.message.textContent = 'You are dead';
     } else {
-      console.log('src/client/Store.js:169:18:`Player ${position} is dead`', `Player ${ position } is dead`);
+      console.log('src/client/Store.js:170:18:`Player ${position} is dead`', `Player ${ position } is dead`);
     }
   },
   handleWin(position, state) {
     if (position === state.position) {
       g.store.won = true;
       g.message.textContent = 'You WON';
-      console.log('src/client/Store.js:176:18:\'You won\'', 'You won');
+      console.log('src/client/Store.js:177:18:\'You won\'', 'You won');
     }
   }
 };
@@ -672,6 +688,8 @@ g.bgcanvas = document.getElementById('bgc');
 g.bgc = g.bgcanvas.getContext('2d');
 g.icanvas = document.getElementById('ic');
 g.ic = g.icanvas.getContext('2d');
+g.lcanvas = document.getElementById('lc');
+g.lc = g.lcanvas.getContext('2d');
 g.health = getById('health');
 g.message = getById('message');
 g.images = {};
@@ -688,27 +706,27 @@ function bind() {
 
   socket.on('actions', function (actions) {
     g.store.acceptActions(actions);
-    console.log('src/client/init.js:24:16:actions', actions);
+    console.log('src/client/init.js:26:16:actions', actions);
   });
   socket.on('start', function (state) {
-    console.log('src/client/init.js:27:16:\'starting\'', 'starting');
+    console.log('src/client/init.js:29:16:\'starting\'', 'starting');
     g.store.startGame(JSON.parse(state));
     //console.log(state, position)
   });
   socket.on("end", function () {
-    console.log('src/client/init.js:32:16:"Waiting for opponent..."', "Waiting for opponent...");
+    console.log('src/client/init.js:34:16:"Waiting for opponent..."', "Waiting for opponent...");
   });
 
   socket.on("connect", function () {
-    console.log('src/client/init.js:36:16:"Waiting for opponent..."', "Waiting for opponent...");
+    console.log('src/client/init.js:38:16:"Waiting for opponent..."', "Waiting for opponent...");
   });
 
   socket.on("disconnect", function () {
-    console.error('src/client/init.js:40:18:"Connection lost!"', "Connection lost!");
+    console.error('src/client/init.js:42:18:"Connection lost!"', "Connection lost!");
   });
 
   socket.on("error", function () {
-    console.error('src/client/init.js:44:18:"Connection error!"', "Connection error!");
+    console.error('src/client/init.js:46:18:"Connection error!"', "Connection error!");
   });
 }
 function init() {
