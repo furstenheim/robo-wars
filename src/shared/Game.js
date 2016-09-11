@@ -2,8 +2,8 @@ g.Game = {
   init: function () {
     return {
       // TODO move this to client
-      h:800,
-      w: 800,
+      h:900,
+      w: 900,
       sx: 30,
       sy: 30,
       np: g.Game.np
