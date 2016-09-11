@@ -35,6 +35,7 @@ function findOpponent(user) {
  * @param {User} user
  */
 function removeUser(user) {
+	user.game.removeUser(user)
 	users.splice(users.indexOf(user), 1);
 }
 
@@ -82,6 +83,8 @@ Game.prototype.move = function () {
 		console.log('sendActions')
 		user.sendActions(stateAndActions.actions)
 	}
+}
+Game.prototype.removeUser = function(user) {
 
 }
 /**

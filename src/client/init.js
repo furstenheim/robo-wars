@@ -6,6 +6,7 @@ g.bgc = g.bgcanvas.getContext('2d')
 g.icanvas = document.getElementById('ic')
 g.ic = g.icanvas.getContext('2d')
 g.health = getById('health')
+g.message = getById('message')
 g.images = {}
 // Nasty trick to cache imgs and make loading sync
 for (let img in g.Tiles) {

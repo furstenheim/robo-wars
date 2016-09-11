@@ -20,6 +20,8 @@ g.store = {
     g.store.state = state
     g.store.render(oldState, state)
     g.Input.renderRobot(state)
+    g.store.renderHealth(state.players)
+    g.message.textContent = null
     g.store.acceptInput()
   },
   acceptInput() {
@@ -162,6 +164,7 @@ g.store = {
     if (position === state.position) {
       console.log('You are dead')
       g.store.dead = true
+      g.message.textContent = 'You are dead'
     } else {
       console.log(`Player ${position} is dead`)
     }
@@ -169,6 +172,7 @@ g.store = {
   handleWin (position, state) {
     if (position === state.position) {
       g.store.won = true
+      g.message.textContent = 'You WON'
       console.log('You won')
     }
   }

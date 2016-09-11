@@ -1,23 +1,295 @@
-(function(){'use strict';/* Shared variables and global js variables (better here than global so they can be minified */// TODO move this to client so there are no conflicts
+(function () {"use strict"
+/* Shared variables and global js variables (better here than global so they can be minified */
+// TODO move this to client so there are no conflicts
 //var socket
 // global variable
-function a(n){return JSON.parse(JSON.stringify(n))}// Half PI
+var g = {};
+var MOVEMENTS = ['ArrowRight', 'ArrowUp', 'ArrowLeft', 'ArrowDown'];
+function clone(object) {
+  return JSON.parse(JSON.stringify(object));
+}
+// Half PI
+var P = Math.PI / 2;
+g.Actions = {
+  init: function () {
+    return {
+      players: []
+    };
+  },
+  types: {
+    player: 'player',
+    laser: 'laser',
+    death: 'death',
+    win: 'win'
+  }
+};
 // Use complex to rotate, move on the plane
-function b(n,o){return Array.isArray(n)?b(n[0],n[1]):{x:n,y:o}}// No method overloadin :(
-var f={},l=['ArrowRight','ArrowUp','ArrowLeft','ArrowDown'],m=Math.PI/2;f.Actions={init:function(){return{players:[]}},types:{player:'player',laser:'laser',death:'death',win:'win'}},b.add=function(n,o){return new b(n.x+o.x,n.y+o.y)},b.multiply=function(n,o){return new b(n.x*o.x-n.y*o.y,n.x*o.y+n.y*o.x)},b.getTheta=function(n){return 0===n.x?1===n.y?1*m:3*m:1===n.x?0:2*m},f.Game={get sx(){return 20},get sy(){return 15},init:function(){return{// TODO move this to client
-h:40*f.Game.sy,w:40*f.Game.sx,sx:f.Game.sx,sy:f.Game.sy,np:f.Game.np}},get np(){return 2},prepareGame:function(n){var o,p,r,q=['floor','wall'],s=[],t=[],u=[0,0.5,0.99,0.5],v=[0.5,0,0.5,0.99],z=[[1,0],[0,1],[-1,0],[0,-1]],A=[],B=[];for(o=0;o<n.np;o++){let C=~~(u[o]*n.sx),D=~~(v[o]*n.sy);A.push(C),B.push(D),t.push(f.Player.init(b(C,D),'player'+o,b(z[o]),1,f.Player.statuses.alive))}for(o=0;o<n.sx;o++)for(p=0;p<n.sy;p++){r=q[0.85>Math.random()?0:1];for(let C=0;C<A.length;C++)2.5>Math.abs(o-A[C])+Math.abs(p-B[C])&&(r=q[0]);s.push(f.Tile.init(o,p,r))}return{game:n,players:t,tiles:s,remainingActions:[],postActions:[]}},computeMovements(n,o){// We compute the resulting positions and actions and that is what we pass to the users, as the tiles they already know
-var s,p=a(n),q=[],r=p.players;for(let t of o){// ohh my old node without json destructuring
-let u=t.position;// dead are not allowed to move
-if(r[u].s!==f.Player.statuses.dead){let J=f.Player.handleAction(r[u],t),K={player:J.player,position:u},L=[K],M=J.direction;// Let's do all the pushing (in case we don't stumble to a wall)
-if(M){for(;K=f.Game.computePlayerCollision(K.player,r,M);)L.push(K);// Compute if the movement is possible, if not we abort all movements
-f.Game.computeMovementObstruction(L[L.length-1].player,p)&&(L=[{player:r[u],position:u}])}for(let Q of L)r[Q.position]=Q.player;let N=[],O=r[u];if(s=f.Game.computeLasers(O,r,p)){let Q=f.Player.decreaseHealth(s.oplayer),R=r[s.oposition].s===f.Player.statuses.alive&&Q.s===f.Player.statuses.dead;if(r[s.oposition]=Q,N.push(Object.assign(s,{oplayer:Q})),R){N.push({type:f.Actions.types.death,oposition:s.oposition});for(let S=0,T=-1,U=0;U<r.length;U++)r[U].s===f.Player.statuses.dead?S++:T=U;(S=r.length-1)&&N.push({type:f.Actions.types.win,position:T})}}// TODO handle shooting
-// TODO add postActions
-q.push({movements:L,postActions:N})}}return{state:p,actions:q}},computePlayerCollision(n,o,p){for(let q=0;q<o.length;q++)if(f.Player.collide(n,o[q]))return{position:q,player:f.Player.move(o[q],p)}},computeMovementObstruction(n,o){// TODO check for blocks
-var p=n.c,q=o.game;return 0>p.x||0>p.y||p.x>q.sx||p.y>q.sy||!('wall'!==o.tiles[q.sy*p.x+p.y].type)||void 0},computeLasers(n,o,p){var q=n;// Laser blasts up to four
-for(let r=0;4>r;r++){// Nothing to shoot
-if(q=f.Player.handleAction(q,{subtype:'ArrowUp'}).player,f.Game.computeMovementObstruction(q,p))return!1;for(let s=0;s<o.length;s++)if(f.Player.collide(q,o[s]))return{type:'laser',player:n,oplayer:o[s],oposition:s}}}},f.Player={init:function(n,o,p,q,r){var s=f.PlayerTile.init(n.x,n.y,o,b.getTheta(p));return{t:s,o:p,c:n,type:o,h:q,s:r}},handleAction(n,o){var p=o.subtype;return'ArrowUp'===p?{player:f.Player.move(n,n.o),direction:n.o}:'ArrowLeft'===p?{player:f.Player.init(n.c,n.type,b.multiply(n.o,{x:0,y:-1}),n.h,n.s)}:'ArrowRight'===p?{player:f.Player.init(n.c,n.type,b.multiply(n.o,{x:0,y:1}),n.h,n.s)}:'ArrowDown'===p?{player:f.Player.move(n,b.multiply({x:-1,y:0},n.o)),direction:b.multiply({x:-1,y:0},n.o)}:void 0},move(n,o){return f.Player.init(b.add(n.c,o),n.type,n.o,n.h,n.s)},collide(n,o){return n.c.x===o.c.x&&n.c.y===o.c.y},decreaseHealth(n){var o=0.93*n.h;return f.Player.init(n.c,n.type,n.o,o,0.5>o?f.Player.statuses.dead:f.Player.statuses.alive)},statuses:{dead:'dead',alive:'alive'}},f.PlayerTile={init:function(n,o,p,q){return{x:n,y:o,type:p,t:q}},changeState:function(n,o,p,q){return{x:n.x+o,y:n.y+p,type:n.type,t:n.t+q}}},f.store={},f.Tile={init:function(n,o,p){return{x:n,y:o,type:p}},render:function(n,o,p){if(p&&!o){var q=f.Game.getRealCoordinates(n,p.x,p.y),r=f.bgc,s=new Image;s.src=f.Tiles[p.type],r.drawImage(s,q.x,q.y,q.w,q.h)}}},'undefined'!=typeof window&&function(){/**
- * Bind Socket.IO and button events
- */function n(){o.on('actions',function(q){f.store.acceptActions(q)}),o.on('start',function(q){f.store.startGame(JSON.parse(q))}),o.on('end',function(){}),o.on('connect',function(){}),o.on('disconnect',function(){}),o.on('error',function(){})}var o,p=document.getElementById.bind(document);/*
+function Complex(x, y) {
+  if (Array.isArray(x)) {
+    return Complex(x[0], x[1]);
+  }
+  return { x: x, y: y };
+}
+
+// No method overloadin :(
+Complex.add = function (c1, c2) {
+  return new Complex(c1.x + c2.x, c1.y + c2.y);
+};
+
+Complex.multiply = function (c1, c2) {
+  return new Complex(c1.x * c2.x - c1.y * c2.y, c1.x * c2.y + c1.y * c2.x);
+};
+
+//This only works 1, -1, i -i we should not need more than that
+Complex.getTheta = function (complex) {
+  if (complex.x === 0) {
+    if (complex.y === 1) {
+      return 1 * P;
+    }
+    return 3 * P;
+  }
+  if (complex.x === 1) {
+    return 0;
+  }
+  return 2 * P;
+};
+g.Game = {
+  get sx() {
+    return 20;
+  },
+  get sy() {
+    return 15;
+  },
+  init: function () {
+    return {
+      // TODO move this to client
+      h: g.Game.sy * 40,
+      w: g.Game.sx * 40,
+      sx: g.Game.sx,
+      sy: g.Game.sy,
+      np: g.Game.np
+    };
+  },
+  get np() {
+    return 2;
+  },
+  prepareGame: function (game) {
+    var i,
+        j,
+        types = ['floor', 'wall'],
+        type,
+        tiles = [],
+        players = [],
+        distorsionsx = [0, 1 / 2, 0.99, 1 / 2],
+        distorsionsy = [1 / 2, 0, 1 / 2, 0.99],
+        distorsionst = [[1, 0], [0, 1], [-1, 0], [0, -1]],
+        xs = [],
+        ys = [];
+    for (i = 0; i < game.np; i++) {
+      let x = ~~(distorsionsx[i] * game.sx);
+      let y = ~~(distorsionsy[i] * game.sy);
+      xs.push(x);
+      ys.push(y);
+      players.push(g.Player.init(Complex(x, y), 'player' + i, Complex(distorsionst[i]), 1, g.Player.statuses.alive));
+    }
+    for (i = 0; i < game.sx; i++) {
+      for (j = 0; j < game.sy; j++) {
+        type = types[Math.random() < 0.85 ? 0 : 1];
+        for (let k = 0; k < xs.length; k++) {
+          if (Math.abs(i - xs[k]) + Math.abs(j - ys[k]) < 2.5) {
+            type = types[0];
+          }
+        }
+        tiles.push(g.Tile.init(i, j, type));
+      }
+    }
+    return { game: game, players: players, tiles: tiles, remainingActions: [], postActions: [] };
+  },
+  computeMovements(state, movements) {
+    // We compute the resulting positions and actions and that is what we pass to the users, as the tiles they already know
+    var newState = clone(state),
+        processedActions = [],
+        players = newState.players,
+        laserAction;
+    for (let movement of movements) {
+      console.log('src/shared/Game.js:41:18:\'computeMovements\',movement', 'computeMovements', movement);
+      // ohh my old node without json destructuring
+      let position = movement.position;
+      // dead are not allowed to move
+      if (players[position].s === g.Player.statuses.dead) continue;
+      let result = g.Player.handleAction(players[position], movement);
+      console.log('src/shared/Game.js:47:18:\'computeMovements\',result', 'computeMovements', result);
+      let playerMoved = { player: result.player, position: position };
+      // Let's do all the pushing (in case we don't stumble to a wall)
+      let playersToMove = [playerMoved];
+      let direction = result.direction;
+      if (direction) {
+        while (playerMoved = g.Game.computePlayerCollision(playerMoved.player, players, direction)) {
+          playersToMove.push(playerMoved);
+        }
+        // Compute if the movement is possible, if not we abort all movements
+        if (g.Game.computeMovementObstruction(playersToMove[playersToMove.length - 1].player, newState)) {
+          // No movements so the player stays in the same place
+          playersToMove = [{ player: players[position], position: position }];
+        } else {
+          // TODO compute holes
+        }
+      }
+      console.log('src/shared/Game.js:64:18:playersToMove.length', playersToMove.length);
+      for (let pl of playersToMove) {
+        players[pl.position] = pl.player;
+      }
+      let postActions = [];
+      let originalPlayer = players[position];
+      if (laserAction = g.Game.computeLasers(originalPlayer, players, newState)) {
+        let weakenedPlayer = g.Player.decreaseHealth(laserAction.oplayer);
+        let dieNow = players[laserAction.oposition].s === g.Player.statuses.alive && weakenedPlayer.s === g.Player.statuses.dead;
+        players[laserAction.oposition] = weakenedPlayer;
+        postActions.push(Object.assign(laserAction, { oplayer: weakenedPlayer }));
+        if (dieNow) {
+          postActions.push({ type: g.Actions.types.death, oposition: laserAction.oposition });
+          let numberOfDeath = 0;
+          let alivePlayer = -1;
+          for (let i = 0; i < players.length; i++) {
+            if (players[i].s === g.Player.statuses.dead) {
+              numberOfDeath++;
+            } else {
+              alivePlayer = i;
+            }
+          }
+          if (numberOfDeath = players.length - 1) postActions.push({ type: g.Actions.types.win, position: alivePlayer });
+        }
+      }
+      // TODO handle shooting
+      // TODO add postActions
+      processedActions.push({ movements: playersToMove, postActions: postActions });
+    }
+    return { state: newState, actions: processedActions };
+  },
+  computePlayerCollision(player, players, direction) {
+    for (let i = 0; i < players.length; i++) {
+      if (g.Player.collide(player, players[i])) {
+        return { position: i, player: g.Player.move(players[i], direction) };
+      }
+    }
+  },
+  computeMovementObstruction(player, state) {
+    // TODO check for blocks
+    var c = player.c,
+        game = state.game;
+    if (c.x < 0 || c.y < 0 || c.x > game.sx || c.y > game.sy) {
+      return true;
+    }
+    if (state.tiles[game.sy * c.x + c.y].type === 'wall') {
+      return true;
+    }
+  },
+  computeLasers(player, players, state) {
+    var playerProjection = player;
+    // Laser blasts up to four
+    for (let i = 0; i < 4; i++) {
+      playerProjection = g.Player.handleAction(playerProjection, { subtype: 'ArrowUp' }).player;
+      // Nothing to shoot
+      if (g.Game.computeMovementObstruction(playerProjection, state)) return false;
+      for (let i = 0; i < players.length; i++) {
+        if (g.Player.collide(playerProjection, players[i])) {
+          console.log('src/shared/Game.js:122:22:\'colliding\',playerProjection,i,players[i]', 'colliding', playerProjection, i, players[i]);
+          return { type: 'laser', player: player, oplayer: players[i], oposition: i };
+        }
+      }
+    }
+  }
+};
+g.Player = {
+  init: function (complex, playerType, orientation, health, status) {
+
+    var tile = g.PlayerTile.init(complex.x, complex.y, playerType, Complex.getTheta(orientation));
+    return {
+      t: tile,
+      o: orientation,
+      c: complex,
+      type: playerType,
+      h: health,
+      s: status
+    };
+  },
+  handleAction(player, action) {
+    var subtype = action.subtype;
+    if (subtype === 'ArrowUp') {
+      // Need movement in case we push another player
+      return { player: g.Player.move(player, player.o), direction: player.o };
+    }
+    if (subtype === 'ArrowLeft') {
+      return { player: g.Player.init(player.c, player.type, Complex.multiply(player.o, { x: 0, y: -1 }), player.h, player.s) };
+    }
+    if (subtype === 'ArrowRight') {
+      // Canvas coordinates grow from top to bottom so orientation is the other sign as usual
+      return { player: g.Player.init(player.c, player.type, Complex.multiply(player.o, { x: 0, y: 1 }), player.h, player.s) };
+    }
+    if (subtype === 'ArrowDown') {
+      return { player: g.Player.move(player, Complex.multiply({ x: -1, y: 0 }, player.o)), direction: Complex.multiply({ x: -1, y: 0 }, player.o) };
+    }
+  },
+  move(player, vector) {
+    return g.Player.init(Complex.add(player.c, vector), player.type, player.o, player.h, player.s);
+  },
+  collide(pl1, pl2) {
+    return pl1.c.x === pl2.c.x && pl1.c.y === pl2.c.y;
+  },
+  decreaseHealth(player) {
+    var newHealth = player.h * 0.93;
+    return g.Player.init(player.c, player.type, player.o, newHealth, newHealth < 0.5 ? g.Player.statuses.dead : g.Player.statuses.alive);
+  },
+  statuses: {
+    dead: 'dead',
+    alive: 'alive'
+  }
+};
+g.PlayerTile = {
+  init: function (x, y, playerType, theta) {
+    return {
+      x: x,
+      y: y,
+      type: playerType,
+      t: theta
+    };
+  },
+  changeState: function (player, dx, dy, dt) {
+    return {
+      x: player.x + dx,
+      y: player.y + dy,
+      type: player.type,
+      t: player.t + dt
+    };
+  }
+};
+g.store = {};
+g.Tile = {
+  init: function (x, y, tileType) {
+    return {
+      x: x,
+      y: y,
+      type: tileType
+    };
+  },
+  render: function (game, oldTile, newTile) {
+    if (!newTile) {
+      return;
+    }
+    if (oldTile) {
+      // Already drawn
+      return;
+    }
+    var realCoordinates = g.Game.getRealCoordinates(game, newTile.x, newTile.y);
+    var c = g.bgc;
+    var floor = new Image();
+    floor.src = g.Tiles[newTile.type];
+    c.drawImage(floor, realCoordinates.x, realCoordinates.y, realCoordinates.w, realCoordinates.h);
+  }
+};
+if (typeof window !== 'undefined') {(function (){var socket;
+var getById = document.getElementById.bind(document);
+/*
 g.Action = {
   init: function (type, params) {
     var action
@@ -39,39 +311,612 @@ g.Action = {
       player: params.player
     }
   }
-}*/// Nasty trick to cache imgs and make loading sync
-for(let q in Object.assign(f.Game,{// No need for this on the server
-getRealCoordinates:function(q,r,s){return{x:r*q.w/q.sx,y:s*q.h/q.sy,w:q.w/q.sx,h:q.h/q.sy}}}),f.Input={init:function(){return{time:new Date,actions:[]}},size:{w:800,h:40},max:4,renderRobot:function(q){var r=f.Input.size.h,s=f.Input.size.w,t=f.ic,u=q.position,v=f.images['player'+u];t.clearRect(0,r,s,s),t.drawImage(v,0,r,r*f.Input.max,r*f.Input.max)},render:function(q,r){var s=f.Input.size.h,t=f.Input.size.w,u=f.ic,v=~~(s/30),z=s*f.Input.max+s/2,A=s/2;// For some reason circle does not disappear without c.beginPath?¿
-u.beginPath(),u.clearRect(0,0,t,s);for(let B=0;B<f.Input.max;B++){u.strokeStyle='black',u.strokeRect(s*B+v,v,s-2*v,s-2*v);let C=q.actions[B];if(C){u.save();let D=f.images.arrow;u.translate(s*B+s/2,s/2),u.rotate(-f.Input.subtypeToTheta(C.subtype)),u.drawImage(D,-(s-2*v)/2,-(s-2*v)/2,s-2*v,s-2*v),u.restore()}}r=Math.max(Math.min(r,1),0),0<r&&(u.beginPath(),u.fillStyle='red',u.moveTo(z,A),u.arc(z,A,A-2*v,0,4*r*m),u.lineTo(z,A),u.closePath(),u.fill()),u.stroke()},clear:function(){var q=f.Input.size.h,r=f.Input.size.w,s=f.ic;s.clearRect(0,0,r,q)},subtypeToTheta(q){var r=l.indexOf(q);if(-1<r)return m*r},// health goes from 0 to 1 1 is healthy, remainingTime so we can prioritize
-acceptAction(q,r,s,t){var u=Math.random()<s,v=a(q);return q.actions.length>=f.Input.max?q:(u?v.actions.push({type:f.Actions.types.player,subtype:r,remainingTime:t}):v.actions.push({type:f.Actions.types.player,subtype:l[~~(4*Math.random())],remainingTime:t}),v)},// Fill input to the total
-fillInput(q){var s,r=a(q);for(s=q.actions.length;s<f.Input.max;s++)r.actions.push({type:f.Actions.types.player,subtype:l[~~(4*Math.random())],remainingTime:0});return r}},Object.assign(f.PlayerTile,{render:function(q,r,s,t){if(s){var v,z,A,B,u=f.Game.getRealCoordinates(q,s.x,s.y);if(t=Math.min(Math.max(t,0),f.store.movement)/f.store.movement,!r)v=u.x,z=u.y,A=s.t;else{var C=f.Game.getRealCoordinates(q,r.x,r.y);v=(1-t)*C.x+t*u.x,z=(1-t)*C.y+t*u.y,B=Math.abs(r.t-s.t)<2*m?r.t:Math.abs(r.t-4*m-s.t)<Math.abs(r.t+4*m-s.t)?r.t-4*m:r.t+4*m,A=(1-t)*B+t*s.t}var D=f.c;f.c.save();var E=u.w/2,F=u.h/2;f.c.translate(v+E,z+F),f.c.rotate(A);var G=f.images[s.type];D.drawImage(G,-F,-E,2*E,2*F),f.c.restore()}}}),f.store={init:function(){return{game:f.Game.init(),tiles:[],players:[],remainingActions:[],postActions:[]}},movement:1000,inputActions:4,inputTime:2000,listenInput:!1,// tick depends movement so we need this wizardy
-get tick(){return this.movement/60},startGame(q){var r=f.store.state;f.store.oldState=r,f.store.state=q,f.store.render(r,q),f.Input.renderRobot(q),f.store.acceptInput()},acceptInput(){if(!f.store.input&&!f.store.dead&&!f.store.won)return f.store.input=f.Input.init(),document.addEventListener('keydown',f.store.handleKeyDown,!1),window.requestAnimationFrame(f.store.acceptInput);// TODO only send necessary actions
-var q=(f.store.inputTime-(new Date-new Date(f.store.input.time)))/f.store.inputTime;return 0>q?(document.removeEventListener('keydown',f.store.handleKeyDown),f.store.input=f.Input.fillInput(f.store.input),f.Input.render(f.store.input,-1),f.store.sendMovements(f.store.input.actions),void(f.store.input=!1)):void(f.Input.render(f.store.input,q),window.requestAnimationFrame(f.store.acceptInput))},acceptActions(q){var r=f.store.state,s=a(r);s.remainingActions=q,f.store.oldState=r,f.store.state=s,f.store.displayMovement()},prepareGame(){var q=f.store.state,r=a(q),s=q.game,t=f.Game.prepareGame(s);r.tiles=t.tiles,r.players=t.players,f.store.state=r,f.store.oldState=q,f.store.render(q,r)},sendMovements(q){o.emit('move',q)},render(q,r,s){f.c.clearRect(0,0,r.game.w,r.game.h);var z,t=q.tiles,u=r.tiles,v=r.game;// First go the tiles
-for(z=0;z<Math.max(t.length,u.length);z++)f.Tile.render(v,t[z],u[z]);var A=q.players,B=r.players;for(z=0;z<Math.max(A.length,B.length);z++)f.PlayerTile.render(v,(A[z]||{}).t,(B[z]||{}).t,s)},displayMovement(){var q=f.store.oldState,r=f.store.state,s=r.game,t=f.store.animating,u=new Date-f.store.time;// we need to do post Actions
-if(t)// Render one just time to make sure we render correctly
-return u>f.store.movement&&(f.store.animating=!1),window.requestAnimationFrame(f.store.displayMovement),f.store.render(q,r,u);var B,v=a(r),z=v.remainingActions,A=v.postActions;// Handle post actions from previous movement
-if(A.length){for(let C of A)f.store.handleAction(v,C);v.postActions=[]}else{// Handle actions
-if(!z.length)return void f.store.acceptInput();// Prepare the actions
-B=z.shift();for(let C of B.movements)Object.assign(v.players[C.position],C.player);v.postActions=B.postActions}// TODO handle postactions
-f.store.oldState=r,f.store.state=v,f.store.animating=!0,f.store.time=new Date,window.requestAnimationFrame(f.store.displayMovement)},handleAction(q,r){return r.type===f.Actions.types.laser?(Object.assign(q.players[r.oposition],r.oplayer),void f.store.renderHealth(q.players)):r.type===f.Actions.types.death?void f.store.handleDeath(r.oposition,q):void(r.type===f.Actions.types.win&&f.store.handleWin(r.position,q))},handleKeyDown(q){var r=q.key||q.code,s=f.store.input,t=a(s),u=(f.store.inputTime-(new Date-new Date(f.store.input.time)))/f.store.inputTime;-1!==l.indexOf(r)&&(f.store.input=f.Input.acceptAction(s,r,1,u))},renderHealth(q){var s,r=[];for(let t=0;t<q.length;t++)s=q[t],r.push(`Player ${t} health: ${parseInt(100*(2*(Math.max(s.h,0.5)-0.5)))} %`);f.health.textContent=r.join(' ')},handleDeath(q,r){q===r.position&&(f.store.dead=!0)},handleWin(q,r){q===r.position&&(f.store.won=!0)}},Object.assign(f.Tile,{render:function(q,r,s){if(s&&!r){var t=f.Game.getRealCoordinates(q,s.x,s.y),u=f.bgc,v=f.images[s.type];u.drawImage(v,t.x,t.y,t.w,t.h)}}}),f.Tiles={},f.Tiles={floor:'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAwAAAAMCAIAAADZF8uwAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH4AkLCTo0C01FEQAAABl0RVh0Q29tbWVudABDcmVhdGVkIHdpdGggR0lNUFeBDhcAAABQSURBVBjTpVBBDgAgCCr/Wr0pe0r1tw6txhJPcVNAHHGOHg6a1pRLMIgo8iAe0bS+IlxtYK7YlTWQOGsQ7w80COXI4/c+Lem7J8zlPeGYclkeyCQcEkGchAAAAABJRU5ErkJggg==',wall:'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAwAAAAMCAIAAADZF8uwAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH4AkLChMusC+d2QAAABl0RVh0Q29tbWVudABDcmVhdGVkIHdpdGggR0lNUFeBDhcAAABLSURBVBjTY7S1tWUgBJjQ+GqqqjgVweVu3b6NqY2RHOvQDIYwmLA6BW4phMEEUQEXRTMDYRKyY9HMQHcTXCtmKBDtO2TrsRpGlEkAsuEcUVru56YAAAAASUVORK5CYII=',player0:'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAABmJLR0QA/wAAAAAzJ3zzAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH4AkLCykj6vVVKgAAABl0RVh0Q29tbWVudABDcmVhdGVkIHdpdGggR0lNUFeBDhcAAACrSURBVEjHY8yOD2WgJWBioDEY+hawwBhTF67+T6lh2fGhjMMviBjRk+mNj1v+MzAwMGio/GS4cYcdqyZkOQ1+H0ayfIBuuIbKT5xyZFmAbCA+35BtAbKB5BqOkkzx+QTZAhh/74bvDAwMDAx7GRDJm6xkiu56Un3DQqzL0YFzACflqQgW0RoqP1EinWoZDeaDG3fYMeKBpjmZlHiguLCjOBUNvcJutMqkuwUAklJFrPsWPH0AAAAASUVORK5CYII=',player1:'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAABmJLR0QAawBfAFVrQDHVAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH4AkLCyYCIQRZuwAAABl0RVh0Q29tbWVudABDcmVhdGVkIHdpdGggR0lNUFeBDhcAAACwSURBVEjHY7S3tWGgJWBioDFgQWL/x6OOEYsYUerp6gOCQEdJEs6+cu85yRYwMjAwMHz69PE/ruA4duEjToP4+PgZCfrg06ePZAfFp08fGawMNDB8yEKqQciG4Il0+kUyVS2YsnA1w5SFqwcuo1EMcuJDR4OIuCBCzuWDzwfHLtzAlQEZaRpExy7cYODj4x/gCgebC6AFGSOW0vM/MWURUUGEy+JBVyczkqiXcVD4AAAU0DA4nLYhlQAAAABJRU5ErkJggg==',arrow:'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH4AkLCiA4sJBNuAAAABl0RVh0Q29tbWVudABDcmVhdGVkIHdpdGggR0lNUFeBDhcAAABXSURBVDjLxZNBDoBACAPb/f+fZw+6hsNqBBLl3iGlxYA6M9ScdwAb2dQB4AtUtnADqd0gQIxUjwHcA3wX46OFTBNjAmcqo7o5b2FtD+JclTfiowd/f+METjMlD4iLdKcAAAAASUVORK5CYII='},f.canvas=document.getElementById('c'),f.c=f.canvas.getContext('2d'),f.bgcanvas=document.getElementById('bgc'),f.bgc=f.bgcanvas.getContext('2d'),f.icanvas=document.getElementById('ic'),f.ic=f.icanvas.getContext('2d'),f.health=p('health'),f.images={},f.Tiles){let r=new Image;r.src=f.Tiles[q],f.images[q]=r}window.addEventListener('load',function(){o=io({upgrade:!1,transports:['websocket']}),n()},!1),f.store.state=f.store.init()}(),'undefined'==typeof window&&function(){/**
+}*/
+Object.assign(g.Game, {
+  // No need for this on the server
+  getRealCoordinates: function (game, x, y) {
+    return {
+      x: x * game.w / game.sx,
+      y: y * game.h / game.sy,
+      w: game.w / game.sx,
+      h: game.h / game.sy
+    };
+  }
+});
+g.Input = {
+  init: function () {
+    return {
+      time: new Date(),
+      actions: []
+    };
+  },
+  size: {
+    w: 800,
+    h: 40
+  },
+  max: 4,
+  renderRobot: function (state) {
+    var h = g.Input.size.h,
+        w = g.Input.size.w,
+        c = g.ic,
+        position = state.position,
+        img = g.images['player' + position];
+    c.clearRect(0, h, w, w);
+    c.drawImage(img, 0, h, h * g.Input.max, h * g.Input.max);
+  },
+  render: function (input, fraction) {
+    var h = g.Input.size.h,
+        w = g.Input.size.w,
+        c = g.ic,
+        d = ~~(h / 30),
+        imgLoaded = 0,
+        cx = h * g.Input.max + h / 2,
+        cy = h / 2;
+    // For some reason circle does not disappear without c.beginPath?¿
+    c.beginPath();
+    c.clearRect(0, 0, w, h);
+    for (let i = 0; i < g.Input.max; i++) {
+      c.strokeStyle = 'black';
+      c.strokeRect(h * i + d, d, h - 2 * d, h - 2 * d);
+      let action = input.actions[i];
+      if (action) {
+        c.save();
+        let image = g.images['arrow'];
+        c.translate(h * i + h / 2, h / 2);
+        c.rotate(-g.Input.subtypeToTheta(action.subtype));
+        c.drawImage(image, -(h - 2 * d) / 2, -(h - 2 * d) / 2, h - 2 * d, h - 2 * d);
+        c.restore();
+      }
+    }
+    fraction = Math.max(Math.min(fraction, 1), 0);
+
+    if (fraction > 0) {
+      c.beginPath();
+      c.fillStyle = 'red';
+      c.moveTo(cx, cy);
+      c.arc(cx, cy, cy - 2 * d, 0, fraction * 4 * P);
+      c.lineTo(cx, cy);
+      c.closePath();
+      c.fill();
+    }
+    c.stroke();
+  },
+  clear: function () {
+    var h = g.Input.size.h,
+        w = g.Input.size.w,
+        c = g.ic;
+    c.clearRect(0, 0, w, h);
+  },
+  subtypeToTheta(subtype) {
+    var subtypes = MOVEMENTS,
+        i = subtypes.indexOf(subtype);
+    if (i > -1) {
+      return P * i;
+    }
+  },
+  // health goes from 0 to 1 1 is healthy, remainingTime so we can prioritize
+  acceptAction(input, code, health, remainingTime) {
+    var right = Math.random() < health,
+        newInput = clone(input);
+    if (input.actions.length >= g.Input.max) {
+      return input;
+    }
+    if (right) {
+      newInput.actions.push({ type: g.Actions.types.player, subtype: code, remainingTime: remainingTime });
+    } else {
+      newInput.actions.push({ type: g.Actions.types.player, subtype: MOVEMENTS[~~(Math.random() * 4)], remainingTime: remainingTime });
+    }
+    return newInput;
+  },
+  // Fill input to the total
+  fillInput(input) {
+    var newInput = clone(input),
+        i;
+    for (i = input.actions.length; i < g.Input.max; i++) {
+      newInput.actions.push({ type: g.Actions.types.player, subtype: MOVEMENTS[~~(Math.random() * 4)], remainingTime: 0 });
+    }
+    return newInput;
+  }
+};
+
+Object.assign(g.PlayerTile, {
+  render: function (game, oldState, newState, time) {
+    if (!newState) {
+      return;
+    }
+    var finalCoordinates = g.Game.getRealCoordinates(game, newState.x, newState.y);
+    var newX, newY, theta, oldT;
+    time = Math.min(Math.max(time, 0), g.store.movement) / g.store.movement;
+    if (!oldState) {
+      newX = finalCoordinates.x;
+      newY = finalCoordinates.y;
+      theta = newState.t;
+    } else {
+      var initialCoordinates = g.Game.getRealCoordinates(game, oldState.x, oldState.y);
+      newX = (1 - time) * initialCoordinates.x + time * finalCoordinates.x;
+      newY = (1 - time) * initialCoordinates.y + time * finalCoordinates.y;
+      oldT = Math.abs(oldState.t - newState.t) < 2 * P ? oldState.t : Math.abs(oldState.t - 4 * P - newState.t) < Math.abs(oldState.t + 4 * P - newState.t) ? oldState.t - 4 * P : oldState.t + 4 * P;
+      //if (oldT !== oldState.t) debugger
+      theta = (1 - time) * oldT + time * newState.t;
+    }
+    var c = g.c;
+    g.c.save();
+    var halfImageWidth = finalCoordinates.w / 2;
+    var halfImageHeight = finalCoordinates.h / 2;
+    g.c.translate(newX + halfImageWidth, newY + halfImageHeight);
+    g.c.rotate(theta);
+    var player = g.images[newState.type];
+    c.drawImage(player, -halfImageHeight, -halfImageWidth, halfImageWidth * 2, halfImageHeight * 2);
+    g.c.restore();
+  }
+});
+g.store = {
+  init: function () {
+    return {
+      game: g.Game.init(),
+      tiles: [],
+      players: [],
+      remainingActions: [],
+      postActions: []
+    };
+  },
+  movement: 1000,
+  inputActions: 4,
+  inputTime: 2000,
+  listenInput: false,
+  // tick depends movement so we need this wizardy
+  get tick() {
+    return this.movement / 60;
+  },
+  startGame(state) {
+    var oldState = g.store.state;
+    g.store.oldState = oldState;
+    g.store.state = state;
+    g.store.render(oldState, state);
+    g.Input.renderRobot(state);
+    g.store.renderHealth(state.players);
+    g.message.textContent = null;
+    g.store.acceptInput();
+  },
+  acceptInput() {
+    if (!g.store.input) {
+      if (!g.store.dead && !g.store.won) {
+        g.store.input = g.Input.init();
+        document.addEventListener('keydown', g.store.handleKeyDown, false);
+        return window.requestAnimationFrame(g.store.acceptInput);
+      }
+    }
+    // TODO only send necessary actions
+    var remainingTime = (g.store.inputTime - (new Date() - new Date(g.store.input.time))) / g.store.inputTime;
+    if (remainingTime < 0) {
+      document.removeEventListener('keydown', g.store.handleKeyDown);
+      console.log('src/client/Store.js:39:18:\'Remaining time is over\'', 'Remaining time is over');
+      g.store.input = g.Input.fillInput(g.store.input);
+      g.Input.render(g.store.input, -1);
+      g.store.sendMovements(g.store.input.actions);
+      g.store.input = false;
+      // TODO tell the server we are ready to go
+      return;
+    }
+    g.Input.render(g.store.input, remainingTime);
+    window.requestAnimationFrame(g.store.acceptInput);
+  },
+  acceptActions(actions) {
+    var state = g.store.state,
+        newState = clone(state);
+    newState.remainingActions = actions;
+    g.store.oldState = state;
+    g.store.state = newState;
+    g.store.displayMovement();
+  },
+  prepareGame() {
+    var state = g.store.state,
+        newState = clone(state),
+        game = state.game;
+    var result = g.Game.prepareGame(game);
+    newState.tiles = result.tiles;
+    newState.players = result.players;
+    g.store.state = newState;
+    g.store.oldState = state;
+    g.store.render(state, newState);
+  },
+  sendMovements(actions) {
+    console.log('src/client/Store.js:68:16:\'Moving\',actions,{actions: g.store.input.actions}', 'Moving', actions, { actions: g.store.input.actions });
+    socket.emit('move', actions);
+  },
+  render(oldState, newState, time) {
+    g.c.clearRect(0, 0, newState.game.w, newState.game.h);
+    var oldTiles = oldState.tiles;
+    var newTiles = newState.tiles;
+    var game = newState.game;
+    var i;
+    // First go the tiles
+    for (i = 0; i < Math.max(oldTiles.length, newTiles.length); i++) {
+      g.Tile.render(game, oldTiles[i], newTiles[i]);
+    }
+    var oldPlayers = oldState.players;
+    var newPlayers = newState.players;
+    for (i = 0; i < Math.max(oldPlayers.length, newPlayers.length); i++) {
+      g.PlayerTile.render(game, (oldPlayers[i] || {}).t, (newPlayers[i] || {}).t, time);
+    }
+  },
+  displayMovement() {
+    var oldState = g.store.oldState,
+        state = g.store.state,
+        game = state.game,
+        animating = g.store.animating,
+        elapsedTime = new Date() - g.store.time;
+    // we need to do post Actions
+    if (animating) {
+      // Leave one tick to make sure we draw the end of it
+      if (elapsedTime > g.store.movement) {
+        g.store.animating = false;
+      }
+      window.requestAnimationFrame(g.store.displayMovement);
+      // Render one just time to make sure we render correctly
+      return g.store.render(oldState, state, elapsedTime);
+    }
+    var newState = clone(state),
+        remainingActions = newState.remainingActions,
+        postActions = newState.postActions,
+        nextActions;
+    // Handle post actions from previous movement
+    if (postActions.length) {
+      for (let postAction of postActions) {
+        console.log('src/client/Store.js:104:20:postAction', postAction);
+        g.store.handleAction(newState, postAction);
+      }
+      newState.postActions = [];
+
+      // TODO laser, holes, lives...
+    } else {
+      // Handle actions
+      if (!remainingActions.length) {
+        g.store.acceptInput();
+        return;
+      }
+      // Prepare the actions
+      nextActions = remainingActions.shift();
+      for (let movement of nextActions.movements) {
+        Object.assign(newState.players[movement.position], movement.player);
+      }
+      newState.postActions = nextActions.postActions;
+    }
+    // TODO handle postactions
+    g.store.oldState = state;
+    g.store.state = newState;
+    g.store.animating = true;
+    g.store.time = new Date();
+    window.requestAnimationFrame(g.store.displayMovement);
+    //g.store.render(state, newState, g.store.time)
+  },
+  handleAction(state, action) {
+    if (action.type === g.Actions.types.laser) {
+
+      Object.assign(state.players[action.oposition], action.oplayer);
+      console.log('src/client/Store.js:135:18:action.oplayer.h,state.players[action.oposition].h', action.oplayer.h, state.players[action.oposition].h);
+      g.store.renderHealth(state.players);
+      return;
+    }
+    if (action.type === g.Actions.types.death) {
+      console.log('src/client/Store.js:140:18:\'death\'', 'death');
+      g.store.handleDeath(action.oposition, state);
+      return;
+    }
+    if (action.type === g.Actions.types.win) {
+      g.store.handleWin(action.position, state);
+    }
+  },
+  handleKeyDown(e) {
+    var code = e.key || e.code,
+        input = g.store.input,
+        newInput = clone(input),
+        remainingTime = (g.store.inputTime - (new Date() - new Date(g.store.input.time))) / g.store.inputTime;
+    if (MOVEMENTS.indexOf(code) !== -1) {
+      // TOOD pass health
+      g.store.input = g.Input.acceptAction(input, code, 1, remainingTime);
+    }
+  },
+  renderHealth(players) {
+    var health = [],
+        player;
+    for (let i = 0; i < players.length; i++) {
+      player = players[i];
+      health.push(`Player ${ i } health: ${ parseInt(2 * (Math.max(player.h, 0.5) - 0.5) * 100) } %`);
+    }
+    g.health.textContent = health.join(' ');
+  },
+  handleDeath(position, state) {
+    if (position === state.position) {
+      console.log('src/client/Store.js:165:18:\'You are dead\'', 'You are dead');
+      g.store.dead = true;
+      g.message.textContent = 'You are dead';
+    } else {
+      console.log('src/client/Store.js:169:18:`Player ${position} is dead`', `Player ${ position } is dead`);
+    }
+  },
+  handleWin(position, state) {
+    if (position === state.position) {
+      g.store.won = true;
+      g.message.textContent = 'You WON';
+      console.log('src/client/Store.js:176:18:\'You won\'', 'You won');
+    }
+  }
+};
+Object.assign(g.Tile, { render: function (game, oldTile, newTile) {
+    if (!newTile) {
+      return;
+    }
+    if (oldTile) {
+      // Already drawn
+      return;
+    }
+    var realCoordinates = g.Game.getRealCoordinates(game, newTile.x, newTile.y);
+    var c = g.bgc;
+    var floor = g.images[newTile.type];
+    c.drawImage(floor, realCoordinates.x, realCoordinates.y, realCoordinates.w, realCoordinates.h);
+  }
+});
+g.Tiles = {};
+g.Tiles = {
+  floor: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAwAAAAMCAIAAADZF8uwAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH4AkLCTo0C01FEQAAABl0RVh0Q29tbWVudABDcmVhdGVkIHdpdGggR0lNUFeBDhcAAABQSURBVBjTpVBBDgAgCCr/Wr0pe0r1tw6txhJPcVNAHHGOHg6a1pRLMIgo8iAe0bS+IlxtYK7YlTWQOGsQ7w80COXI4/c+Lem7J8zlPeGYclkeyCQcEkGchAAAAABJRU5ErkJggg==',
+  wall: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAwAAAAMCAIAAADZF8uwAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH4AkLChMusC+d2QAAABl0RVh0Q29tbWVudABDcmVhdGVkIHdpdGggR0lNUFeBDhcAAABLSURBVBjTY7S1tWUgBJjQ+GqqqjgVweVu3b6NqY2RHOvQDIYwmLA6BW4phMEEUQEXRTMDYRKyY9HMQHcTXCtmKBDtO2TrsRpGlEkAsuEcUVru56YAAAAASUVORK5CYII=',
+  player0: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAABmJLR0QA/wAAAAAzJ3zzAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH4AkLCykj6vVVKgAAABl0RVh0Q29tbWVudABDcmVhdGVkIHdpdGggR0lNUFeBDhcAAACrSURBVEjHY8yOD2WgJWBioDEY+hawwBhTF67+T6lh2fGhjMMviBjRk+mNj1v+MzAwMGio/GS4cYcdqyZkOQ1+H0ayfIBuuIbKT5xyZFmAbCA+35BtAbKB5BqOkkzx+QTZAhh/74bvDAwMDAx7GRDJm6xkiu56Un3DQqzL0YFzACflqQgW0RoqP1EinWoZDeaDG3fYMeKBpjmZlHiguLCjOBUNvcJutMqkuwUAklJFrPsWPH0AAAAASUVORK5CYII=',
+  player1: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAABmJLR0QAawBfAFVrQDHVAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH4AkLCyYCIQRZuwAAABl0RVh0Q29tbWVudABDcmVhdGVkIHdpdGggR0lNUFeBDhcAAACwSURBVEjHY7S3tWGgJWBioDFgQWL/x6OOEYsYUerp6gOCQEdJEs6+cu85yRYwMjAwMHz69PE/ruA4duEjToP4+PgZCfrg06ePZAfFp08fGawMNDB8yEKqQciG4Il0+kUyVS2YsnA1w5SFqwcuo1EMcuJDR4OIuCBCzuWDzwfHLtzAlQEZaRpExy7cYODj4x/gCgebC6AFGSOW0vM/MWURUUGEy+JBVyczkqiXcVD4AAAU0DA4nLYhlQAAAABJRU5ErkJggg==',
+  arrow: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH4AkLCiA4sJBNuAAAABl0RVh0Q29tbWVudABDcmVhdGVkIHdpdGggR0lNUFeBDhcAAABXSURBVDjLxZNBDoBACAPb/f+fZw+6hsNqBBLl3iGlxYA6M9ScdwAb2dQB4AtUtnADqd0gQIxUjwHcA3wX46OFTBNjAmcqo7o5b2FtD+JclTfiowd/f+METjMlD4iLdKcAAAAASUVORK5CYII='
+};
+/* init variables here */
+g.canvas = document.getElementById('c');
+g.c = g.canvas.getContext('2d');
+g.bgcanvas = document.getElementById('bgc');
+g.bgc = g.bgcanvas.getContext('2d');
+g.icanvas = document.getElementById('ic');
+g.ic = g.icanvas.getContext('2d');
+g.health = getById('health');
+g.message = getById('message');
+g.images = {};
+// Nasty trick to cache imgs and make loading sync
+for (let img in g.Tiles) {
+  let image = new Image();
+  image.src = g.Tiles[img];
+  g.images[img] = image;
+}
+/**
+ * Bind Socket.IO and button events
+ */
+function bind() {
+
+  socket.on('actions', function (actions) {
+    g.store.acceptActions(actions);
+    console.log('src/client/init.js:24:16:actions', actions);
+  });
+  socket.on('start', function (state) {
+    console.log('src/client/init.js:27:16:\'starting\'', 'starting');
+    g.store.startGame(JSON.parse(state));
+    //console.log(state, position)
+  });
+  socket.on("end", function () {
+    console.log('src/client/init.js:32:16:"Waiting for opponent..."', "Waiting for opponent...");
+  });
+
+  socket.on("connect", function () {
+    console.log('src/client/init.js:36:16:"Waiting for opponent..."', "Waiting for opponent...");
+  });
+
+  socket.on("disconnect", function () {
+    console.error('src/client/init.js:40:18:"Connection lost!"', "Connection lost!");
+  });
+
+  socket.on("error", function () {
+    console.error('src/client/init.js:44:18:"Connection error!"', "Connection error!");
+  });
+}
+function init() {
+  socket = io({ upgrade: false, transports: ["websocket"] });
+  bind();
+}
+
+window.addEventListener("load", init, false);
+
+g.store.state = g.store.init();
+//setTimeout(function () {g.Input.render(g.Input.init())}, 10)
+//g.store.acceptInput()
+/*g.store.init()
+g.store.prepareGame()
+//var interval = setInterval(g.store.display, g.store.tick)
+g.store.state.remainingActions = [[
+  {type:g.Actions.types.player, player: 0, subtype: 'ArrowUp'},
+  {type:g.Actions.types.player, player: 1, subtype: 'ArrowRight'},
+  {type:g.Actions.types.player, player: 2, subtype: 'ArrowLeft'},
+  {type:g.Actions.types.player, player: 3, subtype: 'ArrowUp'}],
+  [
+    {type:g.Actions.types.player, player: 0, subtype: 'ArrowUp'},
+    {type:g.Actions.types.player, player: 1, subtype: 'ArrowUp'},
+    {type:g.Actions.types.player, player: 2, subtype: 'ArrowLeft'},
+    {type:g.Actions.types.player, player: 3, subtype: 'ArrowUp'}]]
+g.store.displayMovement()*/})()}
+if (typeof window === 'undefined') {(function (){/**
+ * User sessions
+ * @param {array} users
+ */
+var users = [];
+
+/**
  * Find opponents for a user
  * @param {User} user
- */function n(s){for(let t of r)// This actually does not work for g.Game.np === 1. But who wants to play alone?
-if(s!==t&&// loggedUser counts for the total number
-t.opponents.length<f.Game.np-1){for(let u of t.opponents)s.opponents.push(u),u.opponents.push(s);t.opponents.push(s),s.opponents.push(t),t.opponents.length===f.Game.np-1&&new p([t].concat(t.opponents)).start()}}/**
+ */
+function findOpponent(user) {
+	for (let loggedUser of users) {
+		// This actually does not work for g.Game.np === 1. But who wants to play alone?
+		if (user !== loggedUser &&
+		// loggedUser counts for the total number
+		loggedUser.opponents.length < g.Game.np - 1) {
+			for (let opponent of loggedUser.opponents) {
+				user.opponents.push(opponent);
+				opponent.opponents.push(user);
+			}
+			loggedUser.opponents.push(user);
+			user.opponents.push(loggedUser);
+			if (loggedUser.opponents.length === g.Game.np - 1) {
+				new Game([loggedUser].concat(loggedUser.opponents)).start();
+			}
+			return;
+		}
+	}
+}
+
+/**
  * Remove user session
  * @param {User} user
- */function o(s){r.splice(r.indexOf(s),1)}function p(s){this.users=s}/**
+ */
+function removeUser(user) {
+	user.game.removeUser(user);
+	users.splice(users.indexOf(user), 1);
+}
+
+function Game(users) {
+	this.users = users;
+}
+/**
  * Start new game
- *//**
+ */
+Game.prototype.start = function () {
+	var game = g.Game.init(),
+	    users = this.users;
+	// TODO get type of player from users
+	this.state = g.Game.prepareGame(game);
+	this.alive = this.users.length;
+	this.played = 0;
+	this.movements = [];
+	for (let i = 0; i < users.length; i++) {
+		users[i].start(this, i);
+	}
+};
+
+Game.prototype.acceptMove = function (actions, position) {
+	this.played = this.played + 1;
+	for (let action of actions) {
+		this.movements.push(Object.assign({ position: position }, action));
+	}
+	if (this.played === this.alive) {
+		this.played = 0;
+		console.log('src/server/server.js:67:14:this.movements', this.movements);
+		this.move();
+	}
+};
+
+Game.prototype.move = function () {
+	var movements = this.movements.sort((m1, m2) => m2.remainingTime - m1.remainingTime);
+	console.log('src/server/server.js:74:13:\'Start moving\'', 'Start moving');
+	var stateAndActions = g.Game.computeMovements(this.state, movements);
+	this.state = stateAndActions.state;
+	this.movements = [];
+	for (let user of this.users) {
+		if (user.alive && this.state.players[user.position].s === g.Player.statuses.dead) {
+			this.alive = this.alive - 1;
+			user.die();
+		}
+		console.log('src/server/server.js:83:14:\'sendActions\'', 'sendActions');
+		user.sendActions(stateAndActions.actions);
+	}
+};
+Game.prototype.removeUser = function (user) {};
+/**
+ * Is game ended
+ * @return {boolean}
+ */
+Game.prototype.ended = function () {
+	return this.user1.guess !== GUESS_NO && this.user2.guess !== GUESS_NO;
+};
+
+/**
  * User session class
  * @param {Socket} socket
- */function q(s){this.socket=s,this.game=null,this.alive=!0,this.opponents=[]}/**
+ */
+function User(socket) {
+	this.socket = socket;
+	this.game = null;
+	this.alive = true;
+	this.opponents = [];
+}
+
+/**
  * Start new game
  * @param {Game} game
  * @param {User} opponent
- *//**
- * User sessions
- * @param {array} users
- */var r=[];p.prototype.start=function(){var s=f.Game.init(),t=this.users;// TODO get type of player from users
-this.state=f.Game.prepareGame(s),this.alive=this.users.length,this.played=0,this.movements=[];for(let u=0;u<t.length;u++)t[u].start(this,u)},p.prototype.acceptMove=function(s,t){this.played=this.played+1;for(let u of s)this.movements.push(Object.assign({position:t},u));this.played===this.alive&&(this.played=0,this.move())},p.prototype.move=function(){var s=this.movements.sort((u,v)=>v.remainingTime-u.remainingTime),t=f.Game.computeMovements(this.state,s);this.state=t.state,this.movements=[];for(let u of this.users)u.alive&&this.state.players[u.position].s===f.Player.statuses.dead&&(this.alive=this.alive-1,u.die()),u.sendActions(t.actions)},p.prototype.ended=function(){return this.user1.guess!==GUESS_NO&&this.user2.guess!==GUESS_NO},q.prototype.start=function(s,t){this.game=s,this.position=t,this.socket.emit('start',JSON.stringify(Object.assign(s.state,{position:t})))},q.prototype.die=function(){this.alive=!1},q.prototype.move=function(s){this.alive&&this.game.acceptMove(s,this.position)},q.prototype.sendActions=function(s){this.socket.emit('actions',s)},q.prototype.end=function(){this.game=null,this.opponent=null,this.guess=GUESS_NO,this.socket.emit('end')},q.prototype.win=function(){this.socket.emit('win',this.opponent.guess)},q.prototype.lose=function(){this.socket.emit('lose',this.opponent.guess)},q.prototype.draw=function(){this.socket.emit('draw',this.opponent.guess)},module.exports=function(s){var t=new q(s);r.push(t),n(t),s.on('disconnect',function(){o(t)}),s.on('move',function(u){t.move(u)})}}()})();
+ */
+User.prototype.start = function (game, position) {
+	this.game = game;
+	this.position = position;
+	console.log('src/server/server.js:119:13:\'Starting\'', 'Starting');
+	this.socket.emit("start", JSON.stringify(Object.assign(game.state, { position: position })));
+};
+
+User.prototype.die = function () {
+	this.alive = false;
+	// TODO, maybe close connection
+};
+User.prototype.move = function (actions) {
+	if (this.alive) this.game.acceptMove(actions, this.position);
+};
+
+User.prototype.sendActions = function (actions) {
+	this.socket.emit('actions', actions);
+};
+/**
+ * Terminate game
+ */
+User.prototype.end = function () {
+	this.game = null;
+	this.opponent = null;
+	this.guess = GUESS_NO;
+	this.socket.emit("end");
+};
+
+/**
+ * Trigger win event
+ */
+User.prototype.win = function () {
+	this.socket.emit("win", this.opponent.guess);
+};
+
+/**
+ * Trigger lose event
+ */
+User.prototype.lose = function () {
+	this.socket.emit("lose", this.opponent.guess);
+};
+
+/**
+ * Trigger draw event
+ */
+User.prototype.draw = function () {
+	this.socket.emit("draw", this.opponent.guess);
+};
+
+/**
+ * Socket.IO on connect event
+ * @param {Socket} socket
+ */
+module.exports = function (socket) {
+	var user = new User(socket);
+	users.push(user);
+	findOpponent(user);
+
+	socket.on("disconnect", function () {
+		console.log('src/server/server.js:175:14:"Disconnected: " + socket.id', "Disconnected: " + socket.id);
+		// TODO handle logic in game, specially moves in the middle
+		removeUser(user);
+		/*if (user.opponent) {
+  	user.opponent.end();
+  	findOpponent(user.opponent);
+  }*/
+	});
+	socket.on("move", function (input) {
+		console.log('src/server/server.js:184:14:\'user move\'', 'user move');
+		// TODO check input
+		user.move(input);
+	});
+
+	console.log('src/server/server.js:189:13:"Connected: " + socket.id', "Connected: " + socket.id);
+};})()}})()
