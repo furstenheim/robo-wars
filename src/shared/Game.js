@@ -103,7 +103,7 @@ g.Game = {
   computeMovementObstruction (player, state) {
     // TODO check for blocks
     var c = player.c, game = state.game
-    if (c.x < 0 || c.y < 0 || c.x > game.sx || c.y > game.sy) {
+    if (c.x < 0 || c.y < 0 || c.x >= game.sx || c.y >= game.sy) {
       return true
     }
     if (state.tiles[game.sy * c.x + c.y].type === 'wall') {
