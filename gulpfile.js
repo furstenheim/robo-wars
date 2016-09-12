@@ -50,9 +50,7 @@ gulp.task('build', function () {
 
   var minifiedJs = js.pipe(clone()).pipe(strip()).pipe(stripDebug().on('error', function (e) {console.error(e)})).pipe(babel({presets:['babili']}))
   // So we can quickly check minification is right
-  minifiedJs.pipe(gulp.dest('dist'))
-  html.pipe(gulp.dest('dist'))
-  sharedFile.pipe(gulp.dest('dist'))
+
   // For some reason index.html is not being added to the zip
   // merge(minifiedJs, html, sharedFile)
   //   .pipe(zip('archive.zip'))

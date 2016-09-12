@@ -566,6 +566,7 @@ g.store = {
     g.Input.renderRobot(state);
     g.store.renderHealth(state.players);
     g.message.textContent = null;
+    getById('help').textContent = null;
     g.store.acceptInput();
   },
   acceptInput() {
@@ -579,7 +580,7 @@ g.store = {
     var remainingTime = (g.store.inputTime - (new Date() - new Date(g.store.input.time))) / g.store.inputTime;
     if (remainingTime < 0) {
       document.removeEventListener('keydown', g.store.handleKeyDown);
-      console.log('src/client/Store.js:39:18:\'Remaining time is over\'', 'Remaining time is over');
+      console.log('src/client/Store.js:40:18:\'Remaining time is over\'', 'Remaining time is over');
       g.store.input = g.Input.fillInput(g.store.input);
       g.Input.render(g.store.input, -1);
       g.store.sendMovements(g.store.input.actions);
@@ -610,7 +611,7 @@ g.store = {
     g.store.render(state, newState);
   },
   sendMovements(actions) {
-    console.log('src/client/Store.js:68:16:\'Moving\',actions,{actions: g.store.input.actions}', 'Moving', actions, { actions: g.store.input.actions });
+    console.log('src/client/Store.js:69:16:\'Moving\',actions,{actions: g.store.input.actions}', 'Moving', actions, { actions: g.store.input.actions });
     socket.emit('move', actions);
   },
   render(oldState, newState, time) {
@@ -652,7 +653,7 @@ g.store = {
     // Handle post actions from previous movement
     if (postActions.length) {
       for (let postAction of postActions) {
-        console.log('src/client/Store.js:104:20:postAction', postAction);
+        console.log('src/client/Store.js:105:20:postAction', postAction);
         g.store.handleAction(newState, postAction);
       }
       newState.postActions = [];
@@ -661,7 +662,7 @@ g.store = {
     } else {
       // Handle actions
       if (!remainingActions.length) {
-        console.log('src/client/Store.js:113:20:\'acceptInput\'', 'acceptInput');
+        console.log('src/client/Store.js:114:20:\'acceptInput\'', 'acceptInput');
         g.store.acceptInput();
         return;
       }
@@ -683,14 +684,14 @@ g.store = {
   handleAction(state, action) {
     if (action.type === g.Actions.types.laser) {
       Object.assign(state.players[action.oposition], action.oplayer);
-      console.log('src/client/Store.js:135:18:action.oplayer.h,state.players[action.oposition].h', action.oplayer.h, state.players[action.oposition].h);
+      console.log('src/client/Store.js:136:18:action.oplayer.h,state.players[action.oposition].h', action.oplayer.h, state.players[action.oposition].h);
       g.store.renderHealth(state.players);
       g.Laser.showLaser(state.game, action.player, action.oplayer);
       g.Sounds.play('shoot');
       return;
     }
     if (action.type === g.Actions.types.death) {
-      console.log('src/client/Store.js:142:18:\'death\'', 'death');
+      console.log('src/client/Store.js:143:18:\'death\'', 'death');
       g.store.handleDeath(action.oposition, state);
       return;
     }
@@ -720,18 +721,18 @@ g.store = {
   handleDeath(position, state) {
     g.Sounds.play('death');
     if (position === state.position) {
-      console.log('src/client/Store.js:168:18:\'You are dead\'', 'You are dead');
+      console.log('src/client/Store.js:169:18:\'You are dead\'', 'You are dead');
       g.store.dead = true;
       g.message.textContent = 'You are dead';
     } else {
-      console.log('src/client/Store.js:172:18:`Player ${position} is dead`', `Player ${ position } is dead`);
+      console.log('src/client/Store.js:173:18:`Player ${position} is dead`', `Player ${ position } is dead`);
     }
   },
   handleWin(position, state) {
     if (position === state.position) {
       g.won = true;
       g.message.textContent = 'You WON';
-      console.log('src/client/Store.js:179:18:\'You won\'', 'You won');
+      console.log('src/client/Store.js:180:18:\'You won\'', 'You won');
     }
   }
 };
@@ -1002,7 +1003,7 @@ User.prototype.die = function () {
 	// TODO, maybe close connection
 };
 User.prototype.move = function (actions) {
-	if (this.alive) this.game.acceptMove(actions, this.position);
+	if (this.alive && this.game) this.game.acceptMove(actions, this.position);
 };
 User.prototype.announceDeath = function () {
 	// Not interested for now
@@ -1038,17 +1039,18 @@ User.prototype.removeOpponent = function (user) {
 module.exports = function (socket) {
 	var user = new User(socket);
 	users.push(user);
+	console.log('src/server/server.js:170:13:users.length', users.length);
 	findOpponent(user);
 
 	socket.on("disconnect", function () {
-		console.log('src/server/server.js:173:14:"Disconnected: " + socket.id', "Disconnected: " + socket.id);
+		console.log('src/server/server.js:174:14:"Disconnected: " + socket.id', "Disconnected: " + socket.id);
 		removeUser(user);
 	});
 	socket.on("move", function (input) {
-		console.log('src/server/server.js:177:14:\'user move\'', 'user move');
+		console.log('src/server/server.js:178:14:\'user move\'', 'user move');
 		// TODO check input
 		user.move(input);
 	});
 
-	console.log('src/server/server.js:182:13:"Connected: " + socket.id', "Connected: " + socket.id);
+	console.log('src/server/server.js:183:13:"Connected: " + socket.id', "Connected: " + socket.id);
 };})()}})()

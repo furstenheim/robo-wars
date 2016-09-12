@@ -23,6 +23,7 @@ g.store = {
     g.Input.renderRobot(state)
     g.store.renderHealth(state.players)
     g.message.textContent = null
+    getById('help').textContent = null
     g.store.acceptInput()
   },
   acceptInput() {
