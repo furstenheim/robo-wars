@@ -131,7 +131,7 @@ User.prototype.die = function () {
 	// TODO, maybe close connection
 }
 User.prototype.move = function (actions) {
-	if (this.alive) this.game.acceptMove(actions, this.position)
+	if (this.alive && this.game) this.game.acceptMove(actions, this.position)
 }
 User.prototype.announceDeath = function () {
 	// Not interested for now
@@ -167,6 +167,7 @@ User.prototype.removeOpponent = function (user) {
 module.exports = function (socket) {
 	var user = new User(socket)
 	users.push(user);
+	console.log(users.length)
 	findOpponent(user)
 
 	socket.on("disconnect", function () {

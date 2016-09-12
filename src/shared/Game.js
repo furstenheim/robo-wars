@@ -4,7 +4,7 @@ g.Game = {
   init: function () {
     return {
       // TODO move this to client
-      h:g.Game.sy * 40,
+      h:g.Game.sy * 40, 
       w: g.Game.sx * 40,
       sx: g.Game.sx,
       sy: g.Game.sy,

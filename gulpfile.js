@@ -31,7 +31,7 @@ gulp.task('build', function () {
     .pipe(createBabel())
     .pipe(concat('server.js'))
     .pipe(insert.wrap('if (typeof window === \'undefined\') {(function (){', '})()}'))
-    
+
   var js = merge(shared, client, server)
     .pipe(concat('server.js'))
     .pipe(insert.wrap('(function () {"use strict"\n', '})()'))
@@ -51,14 +51,17 @@ gulp.task('build', function () {
   var minifiedJs = js.pipe(clone()).pipe(strip()).pipe(stripDebug().on('error', function (e) {console.error(e)})).pipe(babel({presets:['babili']}))
   // So we can quickly check minification is right
   minifiedJs.pipe(gulp.dest('dist'))
-  merge(minifiedJs, html, clientFile, sharedFile)
-    .pipe(zip('archive.zip'))
-    .pipe(s)
-    .pipe(gulp.dest('dist'))
-    .pipe(notify({
-      onLast: true,
-      message: ()=> `Total size is ${s.prettySize}. Which is ${(s.size /13312 * 100).toFixed(2)} %`
-    }))
+  html.pipe(gulp.dest('dist'))
+  sharedFile.pipe(gulp.dest('dist'))
+  // For some reason index.html is not being added to the zip
+  // merge(minifiedJs, html, sharedFile)
+  //   .pipe(zip('archive.zip'))
+  //   .pipe(s)
+  //   .pipe(gulp.dest('dist'))
+  //   .pipe(notify({
+  //     onLast: true,
+  //     message: ()=> `Total size is ${s.prettySize}. Which is ${(s.size /13312 * 100).toFixed(2)} %`
+  //   }))
 
 })
 
