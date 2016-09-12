@@ -11,7 +11,7 @@ g.Game = {
       np: g.Game.np
     }
   },
-  get np() {return 4},
+  get np() {return 2},
   prepareGame: function (game, np) {
     var i,j, types = ['floor', 'wall'], type, tiles=[], players=[],distorsionsx = [0, 0.99, 1/2, 1/2], distorsionsy = [ 1/2, 1/2,0,  0.99], distorsionst = [[1, 0], [0,1], [-1, 0], [0, -1]], xs = [], ys = []
     for (i=0; i<np; i++) {
