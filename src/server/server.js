@@ -21,7 +21,7 @@ function findOpponent(user) {
 			if (loggedUser.opponents.length === g.Game.np -1) {
 				new Game([loggedUser].concat(loggedUser.opponents)).start()
 			} else {
-				loggedUser.startCount()
+				user.startCount()
 			}
 			return
 		}
@@ -150,6 +150,7 @@ User.prototype.startCount = function () {
 	}, 30000)
 }
 User.prototype.removeCount = function () {
+	console.log('removeCount', this.timeout)
 	clearTimeout(this.timeout)
 }
 User.prototype.sendActions = function (actions) {

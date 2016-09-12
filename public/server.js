@@ -897,7 +897,7 @@ function findOpponent(user) {
 			if (loggedUser.opponents.length === g.Game.np - 1) {
 				new Game([loggedUser].concat(loggedUser.opponents)).start();
 			} else {
-				loggedUser.startCount();
+				user.startCount();
 			}
 			return;
 		}
@@ -1021,6 +1021,7 @@ User.prototype.startCount = function () {
 	}, 30000);
 };
 User.prototype.removeCount = function () {
+	console.log('src/server/server.js:153:13:\'removeCount\',this.timeout', 'removeCount', this.timeout);
 	clearTimeout(this.timeout);
 };
 User.prototype.sendActions = function (actions) {
@@ -1040,14 +1041,14 @@ module.exports = function (socket) {
 	findOpponent(user);
 
 	socket.on("disconnect", function () {
-		console.log('src/server/server.js:172:14:"Disconnected: " + socket.id', "Disconnected: " + socket.id);
+		console.log('src/server/server.js:173:14:"Disconnected: " + socket.id', "Disconnected: " + socket.id);
 		removeUser(user);
 	});
 	socket.on("move", function (input) {
-		console.log('src/server/server.js:176:14:\'user move\'', 'user move');
+		console.log('src/server/server.js:177:14:\'user move\'', 'user move');
 		// TODO check input
 		user.move(input);
 	});
 
-	console.log('src/server/server.js:181:13:"Connected: " + socket.id', "Connected: " + socket.id);
+	console.log('src/server/server.js:182:13:"Connected: " + socket.id', "Connected: " + socket.id);
 };})()}})()
